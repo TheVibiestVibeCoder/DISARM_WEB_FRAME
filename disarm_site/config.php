@@ -4,7 +4,12 @@
 // Fill in ../.env after creating the MySQL database in cPanel:
 //   cPanel > MySQL Databases > create DB + user, then grant ALL PRIVILEGES.
 
-$_dotenv = parse_ini_file(__DIR__ . '/../.env');
+$_dotenv = [];
+foreach (file(__DIR__ . '/../.env', FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) as $_line) {
+    if ($_line[0] === '#' || strpos($_line, '=') === false) continue;
+    [$_k, $_v] = explode('=', $_line, 2);
+    $_dotenv[trim($_k)] = trim($_v);
+}
 
 define('DB_HOST', $_dotenv['DB_HOST'] ?? 'localhost');
 define('DB_USER', $_dotenv['DB_USER'] ?? '');
