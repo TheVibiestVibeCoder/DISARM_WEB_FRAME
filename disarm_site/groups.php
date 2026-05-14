@@ -1,109 +1,98 @@
 <?php
 require_once 'config.php';
+require_once 'includes/auth.php';
 require_once 'includes/functions.php';
 $page_title = 'External Groups';
 
-$filter_region = gp('region');
-$filter_q      = gp('q');
-
-$regions = $pdo->query("SELECT DISTINCT region FROM externalgroup WHERE region != '' ORDER BY region")->fetchAll(PDO::FETCH_COLUMN);
-
-$sql    = "SELECT disarm_id, name, summary, sector, primary_role, region, country, twitter_handle, url
-           FROM externalgroup WHERE 1=1";
-$params = [];
-if ($filter_region) { $sql .= " AND region = ?"; $params[] = $filter_region; }
-if ($filter_q) {
-    $sql .= " AND (name LIKE ? OR summary LIKE ? OR country LIKE ?)";
-    $params[] = "%$filter_q%"; $params[] = "%$filter_q%"; $params[] = "%$filter_q%";
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    csrf_check();
+    if (pp('action') === 'add') {
+        $did = strtoupper(trim(pp('disarm_id'))); $name = pp('name');
+        if ($did && $name) {
+            $pdo->prepare("INSERT INTO externalgroup (disarm_id,name,region,country,primary_role) VALUES (?,?,?,?,?)")
+                ->execute([$did, $name, pp('region'), pp('country'), pp('primary_role')]);
+            flash('success', "Group $did added.");
+        } else { flash('error', 'ID and Name are required.'); }
+        header('Location: groups.php'); exit;
+    }
+    if (pp('action') === 'delete') {
+        $did = pp('disarm_id');
+        $pdo->prepare("DELETE FROM externalgroup WHERE disarm_id=?")->execute([$did]);
+        flash('success', "Group $did deleted.");
+        header('Location: groups.php'); exit;
+    }
 }
-$sql .= " ORDER BY name";
 
-$page   = max(1, (int)gp('page', '1'));
-$result = paginate($pdo, $sql, $params, $page, 50);
+$filter_q = gp('q');
+$sql      = "SELECT disarm_id, name, region, country, primary_role FROM externalgroup WHERE 1=1";
+$params   = [];
+if ($filter_q) { $sql .= " AND (name LIKE ? OR region LIKE ? OR country LIKE ?)"; $params[] = "%$filter_q%"; $params[] = "%$filter_q%"; $params[] = "%$filter_q%"; }
+$sql .= " ORDER BY disarm_id";
+$page    = max(1, (int)gp('page', '1'));
+$result  = paginate($pdo, $sql, $params, $page, 50);
+$show_add= (gp('action') === 'add');
 
 include 'includes/header.php';
 ?>
+<div class="container">
+<?= render_flash() ?>
 
-<nav aria-label="breadcrumb" class="mb-3">
-  <ol class="breadcrumb">
-    <li class="breadcrumb-item"><a href="index.php">Home</a></li>
-    <li class="breadcrumb-item active">External Groups</li>
-  </ol>
-</nav>
+<?php if ($show_add): ?>
+<div class="form-section" style="margin-top:clamp(56px,8vw,100px);border-top:none">
+  <div class="form-section-title">New External Group</div>
+  <form method="post">
+    <?= csrf_field() ?><input type="hidden" name="action" value="add">
+    <div class="form-grid">
+      <div class="form-group"><label>DISARM ID *</label><input type="text" name="disarm_id" placeholder="e.g. G001" required></div>
+      <div class="form-group"><label>Name *</label><input type="text" name="name" required></div>
+      <div class="form-group"><label>Region</label><input type="text" name="region"></div>
+      <div class="form-group"><label>Country</label><input type="text" name="country"></div>
+      <div class="form-group"><label>Primary Role</label><input type="text" name="primary_role"></div>
+    </div>
+    <div class="form-actions">
+      <button type="submit" class="btn btn-dark">Add Group</button>
+      <a href="groups.php" class="btn btn-ghost">Cancel</a>
+    </div>
+  </form>
+</div>
+<?php endif; ?>
 
-<div class="card mb-3">
-  <div class="card-body py-2">
-    <form method="get" class="row g-2 align-items-center">
-      <div class="col-md-auto">
-        <select name="region" class="form-select form-select-sm" onchange="this.form.submit()">
-          <option value="">All regions</option>
-          <?php foreach ($regions as $r): ?>
-          <option value="<?= h($r) ?>" <?= $filter_region === $r ? 'selected' : '' ?>><?= h($r) ?></option>
-          <?php endforeach; ?>
-        </select>
-      </div>
-      <div class="col">
-        <input type="text" name="q" class="form-control form-control-sm" placeholder="Search groups, countries…" value="<?= h($filter_q) ?>">
-      </div>
-      <div class="col-auto d-flex gap-2">
-        <button class="btn btn-sm btn-secondary" type="submit"><i class="bi bi-search"></i> Filter</button>
-        <?php if ($filter_region || $filter_q): ?>
-        <a href="groups.php" class="btn btn-sm btn-outline-secondary">Clear</a>
-        <?php endif; ?>
-      </div>
-    </form>
+<div class="page-header">
+  <div class="label">Threat Actors</div>
+  <div class="page-header-row">
+    <div><h1>External Groups</h1><div class="page-count"><?= number_format($result['total']) ?> groups</div></div>
+    <a href="groups.php?action=add" class="btn btn-dark btn-sm">+ New Group</a>
   </div>
 </div>
 
-<div class="d-flex justify-content-between align-items-center mb-2">
-  <h2 class="mb-0 fw-bold">
-    <i class="bi bi-people me-2"></i>External Groups
-    <span class="badge bg-secondary fs-6"><?= number_format($result['total']) ?></span>
-  </h2>
-</div>
+<form method="get" class="filter-bar">
+  <input type="text" name="q" placeholder="Search groups…" value="<?= h($filter_q) ?>">
+  <button type="submit" class="btn btn-dark btn-sm">Filter</button>
+  <?php if ($filter_q): ?><a href="groups.php" class="btn btn-ghost btn-sm">Clear</a><?php endif; ?>
+</form>
 
-<div class="card">
-  <div class="card-body p-0">
-    <table class="table table-hover mb-0">
-      <thead>
-        <tr>
-          <th style="width:100px">ID</th>
-          <th>Name</th>
-          <th style="width:140px">Role</th>
-          <th style="width:120px">Region</th>
-          <th style="width:120px">Country</th>
-          <th style="width:100px">Links</th>
-          <th>Summary</th>
-        </tr>
-      </thead>
-      <tbody>
-        <?php foreach ($result['rows'] as $row): ?>
-        <tr>
-          <td><?= id_badge($row['disarm_id']) ?></td>
-          <td class="fw-semibold"><?= h($row['name']) ?></td>
-          <td><small class="text-muted"><?= h($row['primary_role']) ?></small></td>
-          <td><small><?= h($row['region']) ?></small></td>
-          <td><small><?= h($row['country']) ?></small></td>
-          <td>
-            <?php if ($row['url']): ?>
-            <a href="<?= h($row['url']) ?>" target="_blank" rel="noopener" class="small me-1"><i class="bi bi-box-arrow-up-right"></i></a>
-            <?php endif; ?>
-            <?php if ($row['twitter_handle']): ?>
-            <span class="text-muted small">@<?= h($row['twitter_handle']) ?></span>
-            <?php endif; ?>
-          </td>
-          <td class="text-muted small"><?= h(truncate($row['summary'], 120)) ?></td>
-        </tr>
-        <?php endforeach; ?>
-        <?php if (!$result['rows']) echo '<tr><td colspan="7">' . no_results('No groups match your filters.') . '</td></tr>'; ?>
-      </tbody>
-    </table>
-  </div>
-  <?php if ($result['total_pages'] > 1): ?>
-  <div class="card-footer d-flex justify-content-end">
-    <?= pagination_html($result, 'groups.php', array_filter(['region' => $filter_region, 'q' => $filter_q])) ?>
-  </div>
-  <?php endif; ?>
+<table class="data-table">
+  <thead><tr><th class="col-id">ID</th><th>Group</th><th class="col-mid">Region</th><th class="col-mid">Country</th><th>Role</th><th class="col-sm"></th></tr></thead>
+  <tbody>
+    <?php foreach ($result['rows'] as $row): ?>
+    <tr>
+      <td><?= id_badge($row['disarm_id']) ?></td>
+      <td><?= h($row['name']) ?></td>
+      <td class="col-muted"><?= h($row['region'] ?? '') ?></td>
+      <td class="col-muted"><?= h($row['country'] ?? '') ?></td>
+      <td class="col-muted"><?= h($row['primary_role'] ?? '') ?></td>
+      <td>
+        <form method="post" onsubmit="return confirm('Delete?')">
+          <?= csrf_field() ?><input type="hidden" name="action" value="delete">
+          <input type="hidden" name="disarm_id" value="<?= h($row['disarm_id']) ?>">
+          <button type="submit" class="btn btn-danger btn-sm">Del</button>
+        </form>
+      </td>
+    </tr>
+    <?php endforeach; ?>
+    <?php if (!$result['rows']): ?><tr><td colspan="6"><?= no_results('No groups yet.') ?></td></tr><?php endif; ?>
+  </tbody>
+</table>
+<?= pagination_html($result, 'groups.php', $filter_q ? ['q' => $filter_q] : []) ?>
 </div>
-
 <?php include 'includes/footer.php'; ?>

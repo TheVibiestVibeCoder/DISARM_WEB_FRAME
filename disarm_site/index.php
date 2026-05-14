@@ -1,161 +1,125 @@
 <?php
 require_once 'config.php';
+require_once 'includes/auth.php';
 require_once 'includes/functions.php';
-$page_title = 'Home';
+$page_title = '';
 
-// ── Stats ─────────────────────────────────────────────────────────────────────
 $count = function(string $table) use ($pdo): int {
     try { return (int)$pdo->query("SELECT COUNT(*) FROM `$table`")->fetchColumn(); }
     catch (Exception $e) { return 0; }
 };
 
 $stats = [
-    ['Tactics',          $count('tactic'),        'tactics.php',     'bi-diagram-3',           'text-dark'],
-    ['Techniques',       $count('technique'),      'techniques.php',  'bi-lightning-charge',     'text-danger'],
-    ['Counters',         $count('counter'),        'counters.php',    'bi-shield-check',         'text-primary'],
-    ['Detections',       $count('detection'),      'detections.php',  'bi-eye',                  'text-info'],
-    ['Incidents',        $count('incident'),       'incidents.php',   'bi-exclamation-triangle', 'text-warning'],
-    ['External Groups',  $count('externalgroup'),  'groups.php',      'bi-people',               'text-secondary'],
-    ['Tools',            $count('tool'),           'tools.php',       'bi-tools',                'text-success'],
-    ['Playbooks',        $count('playbook'),       'playbooks.php',   'bi-journal-text',         'text-dark'],
+    ['Techniques', $count('technique'),    'techniques.php'],
+    ['Counters',   $count('counter'),      'counters.php'],
+    ['Incidents',  $count('incident'),     'incidents.php'],
+    ['Tactics',    $count('tactic'),       'tactics.php'],
+    ['Detections', $count('detection'),    'detections.php'],
+    ['Groups',     $count('externalgroup'),'groups.php'],
 ];
 
-// ── Phases + tactics ──────────────────────────────────────────────────────────
 $phases  = $pdo->query("SELECT disarm_id, name FROM phase ORDER BY rank")->fetchAll();
 $tactics = $pdo->query("SELECT disarm_id, name, phase_id FROM tactic ORDER BY disarm_id")->fetchAll();
-
-// ── Latest incidents ──────────────────────────────────────────────────────────
-$recent_incidents = $pdo->query(
-    "SELECT disarm_id, name, year_started, found_in_country FROM incident ORDER BY year_started DESC, disarm_id LIMIT 6"
+$recent  = $pdo->query(
+    "SELECT disarm_id, name, year_started, found_in_country
+     FROM incident ORDER BY year_started DESC, disarm_id LIMIT 10"
 )->fetchAll();
 
 include 'includes/header.php';
 ?>
 
-<!-- ── Hero ──────────────────────────────────────────────────────────────── -->
-<div class="row mb-4">
-  <div class="col-12">
-    <div class="card p-0">
-      <div class="card-body p-4" style="background:linear-gradient(135deg,var(--disarm-dark) 0%,#2c3e50 100%);color:#fff;border-radius:8px;">
-        <div class="row align-items-center g-3">
-          <div class="col-md-8">
-            <h1 class="fw-bold mb-2">DISARM Framework</h1>
-            <p class="mb-0 opacity-75 lh-lg">
-              A structured framework for describing and countering disinformation campaigns,
-              modelled after MITRE ATT&amp;CK. Browse attacker techniques (Red) and
-              defensive countermeasures (Blue) with full cross-references.
-            </p>
-          </div>
-          <div class="col-md-4 d-flex flex-wrap gap-2 justify-content-md-end">
-            <a href="techniques.php" class="btn btn-danger">
-              <i class="bi bi-lightning-charge-fill me-1"></i>Red Framework
-            </a>
-            <a href="counters.php" class="btn btn-primary">
-              <i class="bi bi-shield-fill me-1"></i>Blue Framework
-            </a>
-            <a href="search.php" class="btn btn-outline-light">
-              <i class="bi bi-search me-1"></i>Search
-            </a>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
+<!-- Hero -->
+<section class="hero">
+  <div class="container">
+    <div class="hero-eyebrow">DISARM Foundation · Framework v<?= SITE_VERSION ?></div>
+    <h1>Disinformation<br>Framework</h1>
 
-<!-- ── Stats ─────────────────────────────────────────────────────────────── -->
-<div class="row g-3 mb-4">
-  <?php foreach ($stats as [$label, $n, $link, $icon, $color]): ?>
-  <div class="col-6 col-sm-4 col-md-3 col-xl">
-    <a href="<?= h($link) ?>" class="text-decoration-none">
-      <div class="card stat-card h-100">
-        <i class="bi <?= $icon ?> fs-2 <?= $color ?> mb-1"></i>
-        <div class="stat-number <?= $color ?>"><?= number_format($n) ?></div>
-        <div class="stat-label"><?= h($label) ?></div>
-      </div>
-    </a>
-  </div>
-  <?php endforeach; ?>
-</div>
-
-<!-- ── Phases overview ───────────────────────────────────────────────────── -->
-<div class="card mb-4">
-  <div class="card-header bg-disarm text-white"><i class="bi bi-diagram-3 me-2"></i>Campaign Phases</div>
-  <div class="card-body">
-    <div class="row g-2">
-      <?php foreach ($phases as $ph): ?>
-      <div class="col-sm">
-        <div class="border rounded p-2 text-center h-100">
-          <div class="disarm-id mb-1"><?= h($ph['disarm_id']) ?></div>
-          <div class="small fw-semibold"><?= h($ph['name']) ?></div>
-          <div class="mt-1">
-            <?php
-              $n = count(array_filter($tactics, fn($t) => $t['phase_id'] === $ph['disarm_id']));
-            ?>
-            <span class="badge bg-secondary"><?= $n ?> tactics</span>
-          </div>
-        </div>
+    <!-- Stats -->
+    <div class="stats-grid reveal">
+      <?php foreach ($stats as [$label, $n, $link]): ?>
+      <div class="stat-cell">
+        <a href="<?= h($link) ?>">
+          <div class="stat-num"><?= number_format($n) ?></div>
+          <div class="stat-label"><?= h($label) ?></div>
+        </a>
       </div>
       <?php endforeach; ?>
     </div>
-  </div>
-</div>
 
-<!-- ── Red + Blue quick access ───────────────────────────────────────────── -->
-<div class="row g-3 mb-4">
-
-  <!-- Red -->
-  <div class="col-lg-6">
-    <div class="card h-100">
-      <div class="card-header" style="background:var(--disarm-red);color:#fff">
-        <i class="bi bi-lightning-charge-fill me-2"></i>Red Framework — Attacker Tactics
-      </div>
-      <div class="card-body p-0">
-        <table class="table table-hover table-sm mb-0">
-          <thead><tr><th>ID</th><th>Tactic</th><th>Phase</th></tr></thead>
-          <tbody>
-            <?php foreach ($tactics as $t): ?>
-            <tr>
-              <td><?= id_badge($t['disarm_id'], 'tactic.php?id=' . urlencode($t['disarm_id'])) ?></td>
-              <td><a href="tactic.php?id=<?= urlencode($t['disarm_id']) ?>"><?= h($t['name']) ?></a></td>
-              <td><small class="text-muted"><?= h($t['phase_id']) ?></small></td>
-            </tr>
-            <?php endforeach; ?>
-          </tbody>
-        </table>
-      </div>
-      <div class="card-footer text-center py-2 border-top">
-        <a href="techniques.php" class="small text-danger fw-semibold">Browse all techniques →</a>
+    <div class="hero-bottom reveal">
+      <p class="hero-desc">
+        A structured framework for describing and countering disinformation campaigns,
+        modelled after MITRE ATT&amp;CK. Browse attacker techniques (Red Framework) and
+        defensive countermeasures (Blue Framework) with full cross-references.
+      </p>
+      <div class="hero-cta">
+        <a href="techniques.php" class="btn btn-ghost-inv">Red Framework →</a>
+        <a href="counters.php"   class="btn" style="background:var(--white);color:var(--dark);border-color:var(--white)">Blue Framework →</a>
       </div>
     </div>
   </div>
+</section>
 
-  <!-- Recent incidents -->
-  <div class="col-lg-6">
-    <div class="card h-100">
-      <div class="card-header bg-warning text-dark">
-        <i class="bi bi-exclamation-triangle-fill me-2"></i>Recent Incidents
+<!-- Phases & Tactics -->
+<section class="section">
+  <div class="container">
+    <div class="label reveal">Campaign Structure</div>
+
+    <div class="grid-aside">
+      <div>
+        <h2 class="reveal" style="font-size:clamp(24px,3vw,40px);font-weight:300;letter-spacing:-0.02em;line-height:1.15;position:sticky;top:80px">
+          Phases &amp;<br>Tactics
+        </h2>
       </div>
-      <div class="card-body p-0">
-        <table class="table table-hover table-sm mb-0">
-          <thead><tr><th>ID</th><th>Incident</th><th>Year</th><th>Country</th></tr></thead>
-          <tbody>
-            <?php foreach ($recent_incidents as $inc): ?>
-            <tr>
-              <td><?= id_badge($inc['disarm_id'], 'incident.php?id=' . urlencode($inc['disarm_id'])) ?></td>
-              <td><a href="incident.php?id=<?= urlencode($inc['disarm_id']) ?>"><?= h(truncate($inc['name'], 60)) ?></a></td>
-              <td><?= h($inc['year_started']) ?></td>
-              <td><small class="text-muted"><?= h($inc['found_in_country']) ?></small></td>
-            </tr>
-            <?php endforeach; ?>
-          </tbody>
-        </table>
-      </div>
-      <div class="card-footer text-center py-2 border-top">
-        <a href="incidents.php" class="small text-warning fw-semibold">Browse all incidents →</a>
+      <div class="reveal">
+        <?php foreach ($phases as $ph): ?>
+        <div style="margin-bottom:clamp(28px,4vw,44px)">
+          <div class="section-title" style="margin-bottom:14px">
+            <span class="disarm-id"><?= h($ph['disarm_id']) ?></span>&nbsp;&nbsp;<?= h($ph['name']) ?>
+          </div>
+          <?php foreach (array_filter($tactics, fn($t) => $t['phase_id'] === $ph['disarm_id']) as $t): ?>
+          <div style="border-top:1px solid var(--border);display:grid;grid-template-columns:110px 1fr;gap:12px;padding:11px 0;align-items:baseline">
+            <?= id_badge($t['disarm_id'], 'tactic.php?id=' . urlencode($t['disarm_id'])) ?>
+            <a href="tactic.php?id=<?= urlencode($t['disarm_id']) ?>"
+               style="text-decoration:none;color:var(--text);font-size:14px;font-weight:400">
+              <?= h($t['name']) ?>
+            </a>
+          </div>
+          <?php endforeach; ?>
+        </div>
+        <?php endforeach; ?>
+        <a href="tactics.php" class="btn btn-ghost btn-sm" style="margin-top:8px">All Tactics →</a>
       </div>
     </div>
   </div>
-</div>
+</section>
+
+<!-- Recent Incidents -->
+<?php if ($recent): ?>
+<section class="section section-dark">
+  <div class="container">
+    <div class="label label-dark reveal">Recent Activity</div>
+    <h2 class="reveal" style="font-size:clamp(22px,3vw,40px);font-weight:300;letter-spacing:-0.02em;margin-bottom:clamp(36px,5vw,56px);color:var(--white)">
+      Documented Incidents
+    </h2>
+    <div class="reveal">
+      <?php foreach ($recent as $inc): ?>
+      <div style="border-top:1px solid var(--bd-dark);display:grid;grid-template-columns:110px 1fr 70px 160px;gap:16px;padding:14px 0;align-items:center">
+        <?= id_badge($inc['disarm_id'], 'incident.php?id=' . urlencode($inc['disarm_id']), 'disarm-id-inv') ?>
+        <a href="incident.php?id=<?= urlencode($inc['disarm_id']) ?>"
+           style="text-decoration:none;color:var(--white);font-size:14px;font-weight:300">
+          <?= h(truncate($inc['name'], 80)) ?>
+        </a>
+        <span style="font-size:12px;color:rgba(245,241,235,0.4)"><?= h($inc['year_started']) ?></span>
+        <span style="font-size:12px;color:rgba(245,241,235,0.3)"><?= h(truncate($inc['found_in_country'] ?? '', 22)) ?></span>
+      </div>
+      <?php endforeach; ?>
+      <div style="border-top:1px solid var(--bd-dark);padding-top:20px;margin-top:4px">
+        <a href="incidents.php" class="btn btn-ghost-inv btn-sm">All Incidents →</a>
+      </div>
+    </div>
+  </div>
+</section>
+<?php endif; ?>
 
 <?php include 'includes/footer.php'; ?>

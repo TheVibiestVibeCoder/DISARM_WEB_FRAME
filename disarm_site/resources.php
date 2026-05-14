@@ -1,88 +1,84 @@
 <?php
 require_once 'config.php';
+require_once 'includes/auth.php';
 require_once 'includes/functions.php';
 $page_title = 'Resources';
 
-$filter_type = gp('type');
-$filter_q    = gp('q');
-
-$types = $pdo->query("SELECT DISTINCT resource_type FROM resource WHERE resource_type != '' ORDER BY resource_type")->fetchAll(PDO::FETCH_COLUMN);
-
-$sql    = "SELECT disarm_id, name, summary, resource_type FROM resource WHERE 1=1";
-$params = [];
-if ($filter_type) { $sql .= " AND resource_type = ?"; $params[] = $filter_type; }
-if ($filter_q) {
-    $sql .= " AND (name LIKE ? OR summary LIKE ?)";
-    $params[] = "%$filter_q%"; $params[] = "%$filter_q%";
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    csrf_check();
+    if (pp('action') === 'add') {
+        $did = strtoupper(trim(pp('disarm_id'))); $name = pp('name');
+        if ($did && $name) {
+            $pdo->prepare("INSERT INTO resource (disarm_id,name,resource_type) VALUES (?,?,?)")
+                ->execute([$did, $name, pp('resource_type')]);
+            flash('success', "Resource $did added.");
+        } else { flash('error', 'ID and Name are required.'); }
+        header('Location: resources.php'); exit;
+    }
+    if (pp('action') === 'delete') {
+        $did = pp('disarm_id');
+        $pdo->prepare("DELETE FROM resource WHERE disarm_id=?")->execute([$did]);
+        flash('success', "Resource $did deleted.");
+        header('Location: resources.php'); exit;
+    }
 }
-$sql .= " ORDER BY resource_type, name";
 
+$sql    = "SELECT disarm_id, name, resource_type FROM resource ORDER BY disarm_id";
 $page   = max(1, (int)gp('page', '1'));
-$result = paginate($pdo, $sql, $params, $page, 75);
+$result = paginate($pdo, $sql, [], $page, 50);
+$show_add= (gp('action') === 'add');
 
 include 'includes/header.php';
 ?>
+<div class="container">
+<?= render_flash() ?>
 
-<nav aria-label="breadcrumb" class="mb-3">
-  <ol class="breadcrumb">
-    <li class="breadcrumb-item"><a href="index.php">Home</a></li>
-    <li class="breadcrumb-item active">Resources</li>
-  </ol>
-</nav>
+<?php if ($show_add): ?>
+<div class="form-section" style="margin-top:clamp(56px,8vw,100px);border-top:none">
+  <div class="form-section-title">New Resource</div>
+  <form method="post">
+    <?= csrf_field() ?><input type="hidden" name="action" value="add">
+    <div class="form-grid">
+      <div class="form-group"><label>DISARM ID *</label><input type="text" name="disarm_id" placeholder="e.g. RSC001" required></div>
+      <div class="form-group"><label>Name *</label><input type="text" name="name" required></div>
+      <div class="form-group"><label>Resource Type</label><input type="text" name="resource_type"></div>
+    </div>
+    <div class="form-actions">
+      <button type="submit" class="btn btn-dark">Add Resource</button>
+      <a href="resources.php" class="btn btn-ghost">Cancel</a>
+    </div>
+  </form>
+</div>
+<?php endif; ?>
 
-<div class="card mb-3">
-  <div class="card-body py-2">
-    <form method="get" class="row g-2 align-items-center">
-      <div class="col-md-auto">
-        <select name="type" class="form-select form-select-sm" onchange="this.form.submit()">
-          <option value="">All types</option>
-          <?php foreach ($types as $t): ?>
-          <option value="<?= h($t) ?>" <?= $filter_type === $t ? 'selected' : '' ?>><?= h($t) ?></option>
-          <?php endforeach; ?>
-        </select>
-      </div>
-      <div class="col">
-        <input type="text" name="q" class="form-control form-control-sm" placeholder="Search resources…" value="<?= h($filter_q) ?>">
-      </div>
-      <div class="col-auto d-flex gap-2">
-        <button class="btn btn-sm btn-dark" type="submit"><i class="bi bi-search"></i></button>
-        <?php if ($filter_type || $filter_q): ?>
-        <a href="resources.php" class="btn btn-sm btn-outline-secondary">Clear</a>
-        <?php endif; ?>
-      </div>
-    </form>
+<div class="page-header">
+  <div class="label">Counter Resources</div>
+  <div class="page-header-row">
+    <div><h1>Resources</h1><div class="page-count"><?= number_format($result['total']) ?> resources</div></div>
+    <a href="resources.php?action=add" class="btn btn-dark btn-sm">+ New Resource</a>
   </div>
 </div>
 
-<div class="d-flex justify-content-between align-items-center mb-2">
-  <h2 class="mb-0 fw-bold">
-    <i class="bi bi-box me-2"></i>Resources
-    <span class="badge bg-secondary fs-6"><?= number_format($result['total']) ?></span>
-  </h2>
+<table class="data-table">
+  <thead><tr><th class="col-id">ID</th><th>Resource</th><th class="col-mid">Type</th><th class="col-sm"></th></tr></thead>
+  <tbody>
+    <?php foreach ($result['rows'] as $row): ?>
+    <tr>
+      <td><?= id_badge($row['disarm_id']) ?></td>
+      <td><?= h($row['name']) ?></td>
+      <td class="col-muted"><?= h($row['resource_type'] ?? '') ?></td>
+      <td>
+        <form method="post" onsubmit="return confirm('Delete?')">
+          <?= csrf_field() ?><input type="hidden" name="action" value="delete">
+          <input type="hidden" name="disarm_id" value="<?= h($row['disarm_id']) ?>">
+          <button type="submit" class="btn btn-danger btn-sm">Del</button>
+        </form>
+      </td>
+    </tr>
+    <?php endforeach; ?>
+    <?php if (!$result['rows']): ?><tr><td colspan="4"><?= no_results('No resources yet.') ?></td></tr><?php endif; ?>
+  </tbody>
+</table>
+<?= pagination_html($result, 'resources.php') ?>
 </div>
-
-<div class="card">
-  <div class="card-body p-0">
-    <table class="table table-hover mb-0">
-      <thead><tr><th style="width:100px">ID</th><th>Resource</th><th style="width:160px">Type</th><th>Summary</th></tr></thead>
-      <tbody>
-        <?php foreach ($result['rows'] as $row): ?>
-        <tr>
-          <td><?= id_badge($row['disarm_id']) ?></td>
-          <td class="fw-semibold"><?= h($row['name']) ?></td>
-          <td><span class="badge bg-light text-dark border"><?= h($row['resource_type']) ?></span></td>
-          <td class="text-muted small"><?= h(truncate($row['summary'], 140)) ?></td>
-        </tr>
-        <?php endforeach; ?>
-        <?php if (!$result['rows']) echo '<tr><td colspan="4">' . no_results('No resources found.') . '</td></tr>'; ?>
-      </tbody>
-    </table>
-  </div>
-  <?php if ($result['total_pages'] > 1): ?>
-  <div class="card-footer d-flex justify-content-end">
-    <?= pagination_html($result, 'resources.php', array_filter(['type' => $filter_type, 'q' => $filter_q])) ?>
-  </div>
-  <?php endif; ?>
-</div>
-
 <?php include 'includes/footer.php'; ?>
