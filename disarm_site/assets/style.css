@@ -1,0 +1,117 @@
+/* ── DISARM Framework Browser — Stylesheet ───────────────────────────────── */
+
+:root {
+  --disarm-dark:  #1a2332;
+  --disarm-red:   #c0392b;
+  --disarm-blue:  #1a4f78;
+  --disarm-light: #f4f6f9;
+}
+
+/* ── Layout ─────────────────────────────────────────────────────────────── */
+body {
+  background: var(--disarm-light);
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  color: #222;
+}
+
+.bg-disarm { background-color: var(--disarm-dark) !important; }
+
+/* ── Cards ──────────────────────────────────────────────────────────────── */
+.card {
+  border: none;
+  box-shadow: 0 1px 5px rgba(0,0,0,.07);
+  border-radius: 8px;
+}
+.card-header {
+  font-weight: 600;
+  font-size: .9rem;
+  border-radius: 8px 8px 0 0 !important;
+}
+
+/* ── Tables ─────────────────────────────────────────────────────────────── */
+.table th {
+  font-size: .75rem;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  color: #6c757d;
+  background: #f8f9fa;
+  border-top: none;
+}
+.table td { vertical-align: middle; }
+.table-hover tbody tr:hover { background: #eef2f7; }
+.table a {
+  text-decoration: none;
+  font-weight: 500;
+  color: var(--disarm-dark);
+}
+.table a:hover { color: var(--bs-primary); text-decoration: underline; }
+
+/* ── DISARM ID badge ─────────────────────────────────────────────────────── */
+.disarm-id {
+  font-family: 'Courier New', monospace;
+  font-size: .78rem;
+  font-weight: 700;
+  background: #e8ecf1;
+  color: var(--disarm-dark);
+  padding: 2px 6px;
+  border-radius: 3px;
+  white-space: nowrap;
+}
+a .disarm-id:hover { background: #d0d8e4; }
+
+/* ── Stat / hero cards ───────────────────────────────────────────────────── */
+.stat-card {
+  text-align: center;
+  padding: 1.4rem 1rem;
+  transition: transform .15s, box-shadow .15s;
+}
+.stat-card:hover { transform: translateY(-2px); box-shadow: 0 4px 14px rgba(0,0,0,.12); }
+.stat-number { font-size: 2.2rem; font-weight: 700; line-height: 1.1; }
+.stat-label  { font-size: .78rem; text-transform: uppercase; letter-spacing: .06em; color: #6c757d; margin-top: .3rem; }
+
+/* ── Detail page header ──────────────────────────────────────────────────── */
+.detail-header {
+  background: white;
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 1px 5px rgba(0,0,0,.07);
+}
+.detail-header h1 { font-size: 1.6rem; font-weight: 700; margin-bottom: .25rem; }
+.detail-meta { font-size: .85rem; color: #6c757d; }
+.detail-meta .badge { font-size: .75rem; }
+
+/* ── Summary / description text ─────────────────────────────────────────── */
+.summary-text {
+  font-size: .92rem;
+  color: #444;
+  line-height: 1.75;
+  white-space: pre-wrap;
+}
+
+/* ── Section headings inside cards ──────────────────────────────────────── */
+.section-heading {
+  font-size: .8rem;
+  text-transform: uppercase;
+  letter-spacing: .07em;
+  color: #6c757d;
+  font-weight: 600;
+  margin-bottom: .5rem;
+}
+
+/* ── Framework badges ────────────────────────────────────────────────────── */
+.fw-red  { background: var(--disarm-red);  color: #fff; padding: 2px 8px; border-radius: 4px; font-size:.75rem; font-weight:600; }
+.fw-blue { background: var(--disarm-blue); color: #fff; padding: 2px 8px; border-radius: 4px; font-size:.75rem; font-weight:600; }
+
+/* ── Search page highlights ──────────────────────────────────────────────── */
+mark { background: #fff3cd; padding: 0 2px; border-radius: 2px; }
+
+/* ── Breadcrumb ──────────────────────────────────────────────────────────── */
+.breadcrumb { font-size: .82rem; }
+.breadcrumb-item a { color: var(--disarm-dark); }
+
+/* ── Responsive tweaks ───────────────────────────────────────────────────── */
+@media (max-width: 576px) {
+  .stat-number { font-size: 1.7rem; }
+  .detail-header h1 { font-size: 1.3rem; }
+}
