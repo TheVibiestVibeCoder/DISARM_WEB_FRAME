@@ -1,12 +1,15 @@
 <?php
 // ─── DISARM Framework — Database Configuration ───────────────────────────────
-// Fill these in after creating the MySQL database in cPanel.
-// cPanel > MySQL Databases > create DB + user, then grant ALL PRIVILEGES.
+// Credentials are loaded from ../.env (one level above the web root).
+// Fill in ../.env after creating the MySQL database in cPanel:
+//   cPanel > MySQL Databases > create DB + user, then grant ALL PRIVILEGES.
 
-define('DB_HOST', 'localhost');
-define('DB_USER', 'YOUR_DB_USER');    // e.g. myaccount_disarm
-define('DB_PASS', 'YOUR_DB_PASSWORD');
-define('DB_NAME', 'YOUR_DB_NAME');    // e.g. myaccount_disarm
+$_dotenv = parse_ini_file(__DIR__ . '/../.env');
+
+define('DB_HOST', $_dotenv['DB_HOST'] ?? 'localhost');
+define('DB_USER', $_dotenv['DB_USER'] ?? '');
+define('DB_PASS', $_dotenv['DB_PASS'] ?? '');
+define('DB_NAME', $_dotenv['DB_NAME'] ?? '');
 
 define('SITE_TITLE', 'DISARM Framework Browser');
 define('SITE_VERSION', '2.0');
