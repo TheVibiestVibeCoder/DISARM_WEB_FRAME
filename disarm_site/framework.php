@@ -43,12 +43,12 @@ foreach ($tasks_raw as $tk) {
     $tasks_by_tactic[$tk['tactic_id']][] = $tk;
 }
 
-// Phase colours matching layout_CORRECT.html
+// Phase colours — matches site palette
 $phase_colors = [
-    'P01' => ['bg'=>'#1a4f7a', 'border'=>'#2a6fa0', 'label'=>'p01'],
-    'P02' => ['bg'=>'#7a4a10', 'border'=>'#b06820', 'label'=>'p02'],
-    'P03' => ['bg'=>'#7a1a1a', 'border'=>'#a03030', 'label'=>'p03'],
-    'P04' => ['bg'=>'#1a6a3a', 'border'=>'#2a8a50', 'label'=>'p04'],
+    'P01' => ['bg' => '#1a3a1a', 'tint' => 'rgba(26,58,26,0.06)',  'accent' => '#1a3a1a'],
+    'P02' => ['bg' => '#7A1515', 'tint' => 'rgba(122,21,21,0.06)', 'accent' => '#7A1515'],
+    'P03' => ['bg' => '#0F2D4A', 'tint' => 'rgba(15,45,74,0.06)',  'accent' => '#0F2D4A'],
+    'P04' => ['bg' => '#4a3000', 'tint' => 'rgba(74,48,0,0.06)',   'accent' => '#4a3000'],
 ];
 
 // Build JSON payloads for JS detail panel
@@ -93,271 +93,351 @@ foreach ($tasks_raw as $tk) {
 include 'includes/header.php';
 ?>
 
-<!-- Framework-page dark override -->
 <style>
-.fw-page {
-    background: #0f1117;
-    min-height: calc(100vh - 60px);
-    color: #e0e0e0;
-    padding-bottom: 60px;
-}
-.fw-header {
-    background: #1a1d27;
-    border-bottom: 2px solid #2a2d3e;
-    padding: 18px clamp(16px,4vw,40px);
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    gap: 12px;
-}
-.fw-header h1 { font-size: 1.3rem; font-weight: 700; color: #fff; letter-spacing: 1px; margin: 0; }
-.fw-header p  { font-size: 0.78rem; color: #888; margin: 3px 0 0; }
-.fw-header-links { display: flex; gap: 8px; }
-.fw-header-links a {
-    font-size: 10px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase;
-    padding: 6px 14px; border: 1px solid #2a2d3e; color: #888;
-    text-decoration: none; transition: color 0.15s, border-color 0.15s;
-}
-.fw-header-links a:hover { color: #ccc; border-color: #555; }
+/* ── Framework Matrix — custom layout on top of site design system ── */
 
-/* Legend */
-.fw-legend {
-    display: flex; gap: 12px; padding: 10px clamp(16px,4vw,40px);
-    background: #1a1d27; border-bottom: 1px solid #2a2d3e; flex-wrap: wrap;
+/* Matrix scroll shell */
+.fw-scroll {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 8px;
 }
-.fw-legend-item { display: flex; align-items: center; gap: 5px; font-size: 0.7rem; color: #888; }
-.fw-legend-dot { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
 
-/* Matrix */
-.fw-matrix-wrap { padding: 20px clamp(12px,3vw,32px); overflow-x: auto; }
+/* Phase-column grid */
 .fw-matrix {
     display: grid;
-    grid-template-columns: repeat(<?= count($phases) ?>, minmax(270px, 1fr));
-    gap: 12px;
-    min-width: <?= count($phases) * 280 ?>px;
+    grid-template-columns: repeat(<?= count($phases) ?>, minmax(260px, 1fr));
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    min-width: <?= count($phases) * 262 ?>px;
 }
 
 /* Phase column */
-.fw-phase-col { display: flex; flex-direction: column; gap: 8px; }
+.fw-col { background: var(--bg); display: flex; flex-direction: column; }
 
-/* Phase header */
+/* Phase header strip */
 .fw-phase-hd {
-    padding: 12px 14px;
-    border-radius: 6px 6px 0 0;
-    font-weight: 700; font-size: 0.82rem;
-    letter-spacing: 0.8px; text-transform: uppercase;
-    display: flex; justify-content: space-between; align-items: flex-start;
-    cursor: pointer; user-select: none;
-    color: #fff;
+    padding: 11px 13px;
+    color: var(--white);
+    cursor: pointer;
+    user-select: none;
+    transition: filter 0.15s;
 }
-.fw-phase-hd:hover { filter: brightness(1.12); }
-.fw-phase-id   { font-size: 1rem; opacity: 0.85; display: block; margin-bottom: 3px; }
-.fw-phase-sub  { font-size: 0.68rem; opacity: 0.7; font-weight: 400; display: block; }
-.fw-phase-count {
-    font-size: 0.65rem; background: rgba(255,255,255,0.15);
-    padding: 2px 7px; border-radius: 10px; white-space: nowrap; flex-shrink: 0;
+.fw-phase-hd:hover { filter: brightness(1.1); }
+.fw-ph-id {
+    font-family: 'SF Mono','Fira Code','Courier New',monospace;
+    font-size: 8px; letter-spacing: 0.05em; font-weight: 500;
+    background: rgba(245,241,235,0.15);
+    padding: 1px 5px; display: inline-block; margin-bottom: 5px;
+}
+.fw-ph-name {
+    font-size: 9px; font-weight: 700;
+    letter-spacing: 0.18em; text-transform: uppercase; display: block;
+}
+.fw-ph-sub {
+    font-size: 9px; opacity: 0.55; font-weight: 400;
+    letter-spacing: 0.04em; margin-top: 3px; display: block;
 }
 
 /* Tactic card */
-.fw-tactic { background: #1e2130; border-radius: 4px; overflow: hidden; border: 1px solid #2a2d3e; }
-.fw-tactic + .fw-tactic { margin-top: 6px; }
+.fw-tactic { border-bottom: 1px solid var(--border); }
 
+/* Tactic header */
 .fw-tactic-hd {
-    padding: 10px 12px; cursor: pointer;
+    padding: 9px 12px;
+    cursor: pointer;
     display: flex; justify-content: space-between; align-items: flex-start;
-    transition: background 0.15s; user-select: none;
+    transition: background 0.15s;
+    user-select: none;
 }
-.fw-tactic-hd:hover  { background: #272b3f; }
-.fw-tactic-hd.active { background: #272b3f; }
+.fw-tactic-hd:hover,
+.fw-tactic-hd.active { background: rgba(13,13,13,0.04); }
 
-.fw-tactic-meta { flex: 1; min-width: 0; }
-.fw-tactic-id   { font-size: 0.65rem; font-weight: 700; color: #888; letter-spacing: 0.5px; font-family: 'SF Mono','Fira Code',monospace; }
-.fw-tactic-name { font-size: 0.8rem; font-weight: 600; color: #d0d8f0; margin-top: 2px; line-height: 1.3; }
-.fw-tactic-cnt  { font-size: 0.62rem; color: #666; margin-top: 3px; }
+.fw-ta-id {
+    font-family: 'SF Mono','Fira Code','Courier New',monospace;
+    font-size: 9px; font-weight: 500; color: var(--muted);
+    letter-spacing: 0.04em; display: block; margin-bottom: 3px;
+}
+.fw-ta-name {
+    font-size: 11px; font-weight: 500;
+    color: var(--text); line-height: 1.3; display: block;
+}
+.fw-ta-cnt {
+    font-size: 9px; color: var(--muted); margin-top: 3px; display: block;
+}
 
-.fw-arrow { font-size: 0.65rem; color: #555; margin-left: 8px; margin-top: 4px;
-    transition: transform 0.18s; flex-shrink: 0; }
-.fw-arrow.open { transform: rotate(90deg); color: #888; }
+.fw-arrow {
+    font-size: 9px; color: var(--muted);
+    margin-left: 6px; margin-top: 3px;
+    transition: transform 0.18s; flex-shrink: 0;
+}
+.fw-arrow.open { transform: rotate(90deg); }
 
 /* Expandable panel */
-.fw-panel { display: none; background: #171a27; border-top: 1px solid #2a2d3e; }
+.fw-panel { display: none; border-top: 1px solid var(--border); }
 .fw-panel.open { display: block; }
 
-/* Technique items */
+/* Technique rows */
 .fw-tech {
-    padding: 5px 10px; display: flex; gap: 6px; align-items: flex-start;
-    cursor: pointer; transition: background 0.1s; border-bottom: 1px solid #1e2030;
+    display: flex; gap: 6px; align-items: flex-start;
+    padding: 5px 10px;
+    cursor: pointer;
+    border-bottom: 1px solid var(--border);
+    background: rgba(122,21,21,0.03);
+    transition: background 0.12s;
 }
-.fw-tech:hover { background: #2a2d3e; }
-.fw-tech.fw-sub { padding-left: 22px; }
-.fw-tech-id {
-    font-size: 0.6rem; font-weight: 700; font-family: 'SF Mono','Fira Code',monospace;
-    color: #6a9fd8; flex-shrink: 0; padding-top: 1px; min-width: 58px;
+.fw-tech:hover { background: rgba(122,21,21,0.09); }
+.fw-tech.fw-sub {
+    padding-left: 20px;
+    background: rgba(122,21,21,0.012);
+    border-left: 2px solid rgba(122,21,21,0.15);
 }
-.fw-tech.fw-sub .fw-tech-id { color: #5580a8; }
-.fw-tech-name { font-size: 0.72rem; color: #b0bcd8; line-height: 1.35; }
+.fw-tech.fw-sub:hover { background: rgba(122,21,21,0.06); }
 
-/* Task items */
+.fw-tech-id {
+    font-family: 'SF Mono','Fira Code','Courier New',monospace;
+    font-size: 8px; font-weight: 500; color: var(--muted);
+    flex-shrink: 0; min-width: 50px; letter-spacing: 0.04em; padding-top: 1px;
+}
+.fw-tech-name {
+    font-size: 10.5px; font-weight: 400;
+    color: var(--text); line-height: 1.3;
+}
+.fw-tech:hover .fw-tech-id,
+.fw-tech:hover .fw-tech-name { color: var(--red-fw); }
+
+/* Task rows */
 .fw-tasks-hd {
-    font-size: 0.6rem; text-transform: uppercase; letter-spacing: 1px;
-    color: #555; padding: 6px 10px 3px; border-top: 1px dashed #2a2d3e;
+    font-size: 8px; text-transform: uppercase; letter-spacing: 0.15em;
+    font-weight: 600; color: var(--muted);
+    padding: 5px 10px 3px;
+    border-top: 1px dashed var(--border);
 }
 .fw-task {
-    padding: 4px 10px; display: flex; gap: 6px; align-items: flex-start;
-    cursor: pointer; transition: background 0.1s; border-bottom: 1px solid #1a1d28;
+    display: flex; gap: 6px; align-items: flex-start;
+    padding: 4px 10px;
+    cursor: pointer;
+    border-bottom: 1px solid var(--border);
+    background: rgba(15,45,74,0.025);
+    transition: background 0.12s;
 }
-.fw-task:hover { background: #2a2d3e; }
-.fw-task-id   { font-size: 0.6rem; font-weight: 700; font-family: 'SF Mono','Fira Code',monospace; color: #8a7fc8; flex-shrink: 0; min-width: 58px; padding-top: 1px; }
-.fw-task-name { font-size: 0.7rem; color: #9090b0; line-height: 1.3; }
+.fw-task:hover { background: rgba(15,45,74,0.07); }
+.fw-task-id {
+    font-family: 'SF Mono','Fira Code','Courier New',monospace;
+    font-size: 8px; font-weight: 500; color: var(--muted);
+    flex-shrink: 0; min-width: 50px; letter-spacing: 0.04em; padding-top: 1px;
+}
+.fw-task-name {
+    font-size: 10px; font-weight: 400;
+    color: var(--text); line-height: 1.3;
+}
+.fw-task:hover .fw-task-id,
+.fw-task:hover .fw-task-name { color: var(--blue-fw); }
 
-/* Detail overlay / panel */
+/* Detail slide-out overlay */
 .fw-overlay {
     display: none; position: fixed; inset: 0;
-    background: rgba(0,0,0,0.55); z-index: 200; cursor: pointer;
+    background: rgba(13,13,13,0.4); z-index: 200; cursor: pointer;
 }
 .fw-overlay.open { display: block; }
+
+/* Detail panel */
 .fw-detail {
     position: fixed; right: 0; top: 0; height: 100%;
     width: 420px; max-width: 94vw;
-    background: #1a1d2e; border-left: 2px solid #2a2d4e;
-    z-index: 201; overflow-y: auto; padding: 24px 22px;
-    transform: translateX(100%); transition: transform 0.22s ease;
+    background: var(--bg);
+    border-left: 1px solid var(--border);
+    z-index: 201; overflow-y: auto;
+    padding: 28px 24px;
+    transform: translateX(100%);
+    transition: transform 0.22s ease;
     cursor: default;
 }
 .fw-detail.open { transform: translateX(0); }
+
 .fw-detail-close {
-    position: absolute; top: 14px; right: 16px; cursor: pointer;
-    font-size: 1.1rem; color: #666; background: none; border: none;
+    position: absolute; top: 16px; right: 18px;
+    cursor: pointer; font-size: 1rem;
+    color: var(--muted); background: none; border: none;
+    font-family: inherit; line-height: 1;
+    transition: color 0.15s;
 }
-.fw-detail-close:hover { color: #aaa; }
-.fw-detail-type { font-size: 0.62rem; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 4px; }
-.fw-detail-id   { font-family: 'SF Mono','Fira Code',monospace; font-size: 0.95rem; font-weight: 700; margin-bottom: 5px; }
-.fw-detail-name { font-size: 1.05rem; font-weight: 700; color: #fff; margin-bottom: 12px; line-height: 1.4; }
-.fw-detail-sum  { font-size: 0.78rem; color: #9090a8; line-height: 1.65; }
-.fw-detail-div  { border: none; border-top: 1px solid #2a2d4e; margin: 14px 0; }
-.fw-detail-sec  { font-size: 0.62rem; text-transform: uppercase; letter-spacing: 1.5px; color: #666; margin-bottom: 7px; }
+.fw-detail-close:hover { color: var(--text); }
+
+.fw-detail-type {
+    font-size: 9px; text-transform: uppercase;
+    letter-spacing: 0.2em; font-weight: 600;
+    color: var(--muted); margin-bottom: 4px;
+}
+.fw-detail-id {
+    font-family: 'SF Mono','Fira Code','Courier New',monospace;
+    font-size: 11px; font-weight: 500;
+    background: rgba(13,13,13,0.07);
+    padding: 3px 7px; display: inline-block;
+    color: var(--text); margin-bottom: 8px;
+}
+.fw-detail-name {
+    font-size: clamp(16px,2vw,22px); font-weight: 300;
+    letter-spacing: -0.015em; line-height: 1.3;
+    color: var(--text); margin-bottom: 14px;
+}
+.fw-detail-sum {
+    font-size: 13px; font-weight: 300;
+    color: var(--muted); line-height: 1.7;
+}
+.fw-detail-div {
+    border: none; border-top: 1px solid var(--border); margin: 16px 0;
+}
+.fw-detail-sec {
+    font-size: 9px; text-transform: uppercase;
+    letter-spacing: 0.18em; font-weight: 600;
+    color: var(--muted); margin-bottom: 8px;
+}
 .fw-detail-link {
-    display: inline-block; margin-top: 14px; padding: 7px 16px;
-    font-size: 0.7rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase;
-    border: 1px solid #2a2d4e; color: #6a9fd8; text-decoration: none;
-    transition: border-color 0.15s, color 0.15s;
+    display: inline-block; margin-top: 16px;
+    font-size: 10px; font-weight: 500;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    border: 1px solid var(--border);
+    color: var(--text); padding: 7px 16px;
+    text-decoration: none;
+    transition: border-color 0.15s;
 }
-.fw-detail-link:hover { border-color: #6a9fd8; color: #8ab8e8; }
-.fw-bc { display: flex; align-items: center; gap: 5px; flex-wrap: wrap; margin-bottom: 14px; }
+.fw-detail-link:hover { border-color: var(--text); }
+
+.fw-bc {
+    display: flex; align-items: center; gap: 5px;
+    flex-wrap: wrap; margin-bottom: 16px;
+}
 .fw-bc-item {
-    font-size: 0.68rem; padding: 2px 8px; border-radius: 10px;
-    font-weight: 600;
+    font-size: 9px; font-weight: 600;
+    letter-spacing: 0.12em; text-transform: uppercase;
+    padding: 2px 7px;
+    background: rgba(13,13,13,0.07);
+    color: var(--muted);
 }
-.fw-bc-phase  { background: #1a3a5a; color: #6ab0e0; }
-.fw-bc-tactic { background: #2a2040; color: #9080d0; }
-.fw-bc-sep    { color: #444; font-size: 0.75rem; }
+.fw-bc-sep { color: var(--muted); font-size: 10px; }
 </style>
 
-<div class="fw-page">
+<div class="container">
 
-  <!-- Header -->
-  <div class="fw-header">
-    <div>
-      <h1>DISARM Framework Matrix</h1>
-      <p>Phases &rarr; Tactics &rarr; Techniques &rarr; Tasks &nbsp;&middot;&nbsp;
-         Click tactics to expand &nbsp;&middot;&nbsp; Click items for details</p>
-    </div>
-    <div class="fw-header-links">
-      <a href="techniques.php">All Techniques</a>
-      <a href="tactics.php">All Tactics</a>
+  <!-- Page header -->
+  <div class="page-header">
+    <div class="label">Framework</div>
+    <div class="page-header-row">
+      <div>
+        <h1>Framework Matrix</h1>
+        <div class="page-count">Phases &rarr; Tactics &rarr; Techniques &rarr; Tasks</div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <a href="techniques.php" class="btn btn-ghost btn-sm">All Techniques</a>
+        <a href="tactics.php"    class="btn btn-ghost btn-sm">All Tactics</a>
+      </div>
     </div>
   </div>
 
   <!-- Legend -->
-  <div class="fw-legend">
-    <div class="fw-legend-item"><div class="fw-legend-dot" style="background:#2a6fa0"></div> Phase</div>
-    <div class="fw-legend-item"><div class="fw-legend-dot" style="background:#3a4060"></div> Tactic</div>
-    <div class="fw-legend-item"><div class="fw-legend-dot" style="background:#6a9fd8"></div> Technique</div>
-    <div class="fw-legend-item"><div class="fw-legend-dot" style="background:#5580a8"></div> Sub-technique</div>
-    <div class="fw-legend-item"><div class="fw-legend-dot" style="background:#8a7fc8"></div> Task</div>
+  <div class="matrix-legend">
+    <?php foreach ($phases as $ph):
+      $pc = $phase_colors[$ph['disarm_id']] ?? ['bg'=>'#555'];
+    ?>
+    <div class="legend-item">
+      <span class="legend-dot" style="background:<?= $pc['bg'] ?>"></span>
+      <span class="legend-label"><?= h($ph['disarm_id']) ?> <?= h($ph['name']) ?></span>
+    </div>
+    <?php endforeach; ?>
+    <div class="legend-sep"></div>
+    <div class="legend-item">
+      <span class="legend-swatch legend-parent"></span>
+      <span class="legend-label">Technique</span>
+    </div>
+    <div class="legend-item">
+      <span class="legend-swatch legend-sub"></span>
+      <span class="legend-label">Sub-technique</span>
+    </div>
+    <div class="legend-item" style="font-size:10px;color:var(--muted);font-weight:400;letter-spacing:0">
+      Click tactics to expand &nbsp;&middot;&nbsp; Click items for details
+    </div>
   </div>
 
-  <!-- Matrix -->
-  <div class="fw-matrix-wrap">
-    <div class="fw-matrix">
+</div><!-- /container -->
 
-      <?php foreach ($phases as $ph):
-        $p_id    = $ph['disarm_id'];
-        $p_col   = $phase_colors[$p_id] ?? ['bg'=>'#333','border'=>'#555'];
-        $p_tacts = $tactics_by_phase[$p_id] ?? [];
-        $p_tech_count = 0;
-        foreach ($p_tacts as $ta) {
-            $p_tech_count += count($techniques_by_tactic[$ta['disarm_id']] ?? []);
-        }
+<!-- Full-width matrix scroll -->
+<div class="fw-scroll" style="padding:0 clamp(20px,5vw,80px) clamp(40px,5vw,64px)">
+  <div class="fw-matrix">
+
+    <?php foreach ($phases as $ph):
+      $p_id    = $ph['disarm_id'];
+      $p_col   = $phase_colors[$p_id] ?? ['bg'=>'#333','tint'=>'rgba(0,0,0,0.04)','accent'=>'#333'];
+      $p_tacts = $tactics_by_phase[$p_id] ?? [];
+      $p_tech_count = 0;
+      foreach ($p_tacts as $ta) {
+          $p_tech_count += count($techniques_by_tactic[$ta['disarm_id']] ?? []);
+      }
+    ?>
+    <div class="fw-col">
+
+      <!-- Phase strip -->
+      <div class="fw-phase-hd"
+           style="background:<?= $p_col['bg'] ?>"
+           onclick="showDetail('phase','<?= h($p_id) ?>')">
+        <span class="fw-ph-id"><?= h($p_id) ?></span>
+        <span class="fw-ph-name"><?= h($ph['name']) ?></span>
+        <span class="fw-ph-sub"><?= count($p_tacts) ?> tactics &middot; <?= $p_tech_count ?> techniques</span>
+      </div>
+
+      <!-- Tactic cards -->
+      <?php foreach ($p_tacts as $ta):
+        $ta_id   = $ta['disarm_id'];
+        $techs   = $techniques_by_tactic[$ta_id] ?? [];
+        $tasks   = $tasks_by_tactic[$ta_id] ?? [];
+        $card_id = 'card-' . preg_replace('/\W/', '', $ta_id);
       ?>
-      <div class="fw-phase-col">
-
-        <!-- Phase header -->
-        <div class="fw-phase-hd"
-             style="background:<?= $p_col['bg'] ?>;border:1px solid <?= $p_col['border'] ?>"
-             onclick="showDetail('phase','<?= h($p_id) ?>')">
+      <div class="fw-tactic">
+        <div class="fw-tactic-hd"
+             style="border-left:2px solid <?= $p_col['bg'] ?>"
+             onclick="toggleCard('<?= $card_id ?>')"
+             ondblclick="showDetail('tactic','<?= h($ta_id) ?>')"
+             title="Double-click for full detail">
           <div>
-            <span class="fw-phase-id"><?= h($p_id) ?></span>
-            <?= h($ph['name']) ?>
-            <span class="fw-phase-sub"><?= count($p_tacts) ?> tactics &middot; <?= $p_tech_count ?> techniques</span>
+            <span class="fw-ta-id"><?= h($ta_id) ?></span>
+            <span class="fw-ta-name"><?= h($ta['name']) ?></span>
+            <span class="fw-ta-cnt"><?= count($techs) ?> techniques &middot; <?= count($tasks) ?> tasks</span>
           </div>
+          <span class="fw-arrow" id="arrow-<?= $card_id ?>">&#9654;</span>
         </div>
 
-        <!-- Tactic cards -->
-        <?php foreach ($p_tacts as $idx => $ta):
-          $ta_id   = $ta['disarm_id'];
-          $techs   = $techniques_by_tactic[$ta_id] ?? [];
-          $tasks   = $tasks_by_tactic[$ta_id] ?? [];
-          $card_id = 'card-' . preg_replace('/\W/', '', $ta_id);
-        ?>
-        <div class="fw-tactic <?= $idx === 0 ? 'first' : '' ?>">
-          <div class="fw-tactic-hd" onclick="toggleCard('<?= $card_id ?>')"
-               ondblclick="showDetail('tactic','<?= h($ta_id) ?>')"
-               title="Double-click for full detail">
-            <div class="fw-tactic-meta">
-              <div class="fw-tactic-id"><?= h($ta_id) ?></div>
-              <div class="fw-tactic-name"><?= h($ta['name']) ?></div>
-              <div class="fw-tactic-cnt"><?= count($techs) ?> techniques &middot; <?= count($tasks) ?> tasks</div>
-            </div>
-            <span class="fw-arrow" id="arrow-<?= $card_id ?>">&#9654;</span>
+        <div class="fw-panel" id="<?= $card_id ?>">
+
+          <?php foreach ($techs as $tc):
+            $is_sub = str_contains($tc['disarm_id'], '.');
+          ?>
+          <div class="fw-tech <?= $is_sub ? 'fw-sub' : '' ?>"
+               onclick="showDetail('technique','<?= h($tc['disarm_id']) ?>')">
+            <span class="fw-tech-id"><?= h($tc['disarm_id']) ?></span>
+            <span class="fw-tech-name"><?= h($tc['name']) ?></span>
           </div>
+          <?php endforeach; ?>
 
-          <div class="fw-panel" id="<?= $card_id ?>">
+          <?php if ($tasks): ?>
+          <div class="fw-tasks-hd">Tasks</div>
+          <?php foreach ($tasks as $tk): ?>
+          <div class="fw-task" onclick="showDetail('task','<?= h($tk['disarm_id']) ?>')">
+            <span class="fw-task-id"><?= h($tk['disarm_id']) ?></span>
+            <span class="fw-task-name"><?= h($tk['name']) ?></span>
+          </div>
+          <?php endforeach; ?>
+          <?php endif; ?>
 
-            <!-- Techniques -->
-            <?php foreach ($techs as $tc):
-              $is_sub = str_contains($tc['disarm_id'], '.');
-            ?>
-            <div class="fw-tech <?= $is_sub ? 'fw-sub' : '' ?>"
-                 onclick="showDetail('technique','<?= h($tc['disarm_id']) ?>')">
-              <span class="fw-tech-id"><?= h($tc['disarm_id']) ?></span>
-              <span class="fw-tech-name"><?= h($tc['name']) ?></span>
-            </div>
-            <?php endforeach; ?>
-
-            <!-- Tasks -->
-            <?php if ($tasks): ?>
-            <div class="fw-tasks-hd">Tasks</div>
-            <?php foreach ($tasks as $tk): ?>
-            <div class="fw-task" onclick="showDetail('task','<?= h($tk['disarm_id']) ?>')">
-              <span class="fw-task-id"><?= h($tk['disarm_id']) ?></span>
-              <span class="fw-task-name"><?= h($tk['name']) ?></span>
-            </div>
-            <?php endforeach; ?>
-            <?php endif; ?>
-
-          </div><!-- /fw-panel -->
-        </div><!-- /fw-tactic -->
-        <?php endforeach; ?>
-
-      </div><!-- /fw-phase-col -->
+        </div><!-- /fw-panel -->
+      </div><!-- /fw-tactic -->
       <?php endforeach; ?>
 
-    </div><!-- /fw-matrix -->
-  </div><!-- /fw-matrix-wrap -->
+    </div><!-- /fw-col -->
+    <?php endforeach; ?>
 
-</div><!-- /fw-page -->
+  </div><!-- /fw-matrix -->
+</div><!-- /fw-scroll -->
 
 <!-- Detail slide-out -->
 <div class="fw-overlay" id="fw-overlay" onclick="closeDetail()"></div>
@@ -367,84 +447,81 @@ include 'includes/header.php';
 </div>
 
 <script>
-// Data injected from PHP
-const FW_PHASES     = <?= json_encode($js_phases, JSON_UNESCAPED_UNICODE) ?>;
-const FW_TACTICS    = <?= json_encode($js_tactics, JSON_UNESCAPED_UNICODE) ?>;
+const FW_PHASES     = <?= json_encode($js_phases,     JSON_UNESCAPED_UNICODE) ?>;
+const FW_TACTICS    = <?= json_encode($js_tactics,    JSON_UNESCAPED_UNICODE) ?>;
 const FW_TECHNIQUES = <?= json_encode($js_techniques, JSON_UNESCAPED_UNICODE) ?>;
-const FW_TASKS      = <?= json_encode($js_tasks, JSON_UNESCAPED_UNICODE) ?>;
+const FW_TASKS      = <?= json_encode($js_tasks,      JSON_UNESCAPED_UNICODE) ?>;
 
-// Lookup maps
 const phaseMap = Object.fromEntries(FW_PHASES.map(p => [p.id, p]));
 const tacticMap = Object.fromEntries(FW_TACTICS.map(t => [t.id, t]));
 const techMap   = Object.fromEntries(FW_TECHNIQUES.map(t => [t.id, t]));
 const taskMap   = Object.fromEntries(FW_TASKS.map(t => [t.id, t]));
 
-const techsByTactic = {};
-FW_TECHNIQUES.forEach(t => { (techsByTactic[t.tactic] = techsByTactic[t.tactic]||[]).push(t); });
-const tasksByTactic = {};
-FW_TASKS.forEach(t => { (tasksByTactic[t.tactic] = tasksByTactic[t.tactic]||[]).push(t); });
+const techsByTactic  = {};
+FW_TECHNIQUES.forEach(t => { (techsByTactic[t.tactic]  = techsByTactic[t.tactic]  || []).push(t); });
+const tasksByTactic  = {};
+FW_TASKS.forEach(t => { (tasksByTactic[t.tactic]  = tasksByTactic[t.tactic]  || []).push(t); });
 const tacticsByPhase = {};
-FW_TACTICS.forEach(t => { (tacticsByPhase[t.phase] = tacticsByPhase[t.phase]||[]).push(t); });
+FW_TACTICS.forEach(t => { (tacticsByPhase[t.phase] = tacticsByPhase[t.phase] || []).push(t); });
 
 // Accordion
 function toggleCard(id) {
   const panel = document.getElementById(id);
   const arrow = document.getElementById('arrow-' + id);
-  const hd = panel.previousElementSibling;
-  const open = panel.classList.toggle('open');
+  const hd    = panel.previousElementSibling;
+  const open  = panel.classList.toggle('open');
   if (arrow) arrow.classList.toggle('open', open);
-  if (hd) hd.classList.toggle('active', open);
+  if (hd)    hd.classList.toggle('active', open);
 }
 
-// Detail panel
-const phaseColors = {
-  P01: '#2a6fa0', P02: '#c07020', P03: '#b03030', P04: '#2a8a50'
+// Phase accent colours (match PHP $phase_colors)
+const phaseAccent = {
+  P01: '#1a3a1a', P02: '#7A1515', P03: '#0F2D4A', P04: '#4a3000'
 };
-const typeColors = {
-  phase: '#2a6fa0', tactic: '#9080d0', technique: '#6a9fd8', task: '#8a7fc8'
-};
+
 const typeLinks = {
   tactic:    id => `tactic.php?id=${encodeURIComponent(id)}`,
   technique: id => `technique.php?id=${encodeURIComponent(id)}`,
 };
 
 function esc(s) {
-  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  return String(s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
 function showDetail(type, id) {
-  let item, phaseName, tacticName, phaseId;
+  let item, phaseId, tacticName;
 
   if (type === 'phase') {
     item = phaseMap[id];
   } else if (type === 'tactic') {
-    item = tacticMap[id];
+    item    = tacticMap[id];
     phaseId = item?.phase;
   } else if (type === 'technique') {
     item = techMap[id];
     const tac = tacticMap[item?.tactic];
-    phaseId = tac?.phase;
+    phaseId   = tac?.phase;
     tacticName = tac ? `${tac.id}: ${tac.name}` : null;
   } else if (type === 'task') {
     item = taskMap[id];
     const tac = tacticMap[item?.tactic];
-    phaseId = tac?.phase;
+    phaseId   = tac?.phase;
     tacticName = tac ? `${tac.id}: ${tac.name}` : null;
   }
   if (!item) return;
 
-  const phase = phaseId ? phaseMap[phaseId] : null;
-  const color = typeColors[type] || '#888';
+  const phase  = phaseId ? phaseMap[phaseId] : null;
+  const accent = phaseId ? (phaseAccent[phaseId] || '#0D0D0D') : '#0D0D0D';
+  const typeLabel = { phase:'Phase', tactic:'Tactic', technique:'Technique', task:'Task' }[type];
 
   // Breadcrumb
   let bc = '';
-  if (phase) bc += `<span class="fw-bc-item fw-bc-phase">${esc(phase.id)}: ${esc(phase.name)}</span><span class="fw-bc-sep">›</span>`;
-  if (tacticName) bc += `<span class="fw-bc-item fw-bc-tactic">${esc(tacticName)}</span><span class="fw-bc-sep">›</span>`;
+  if (phase)      bc += `<span class="fw-bc-item">${esc(phase.id)}: ${esc(phase.name)}</span><span class="fw-bc-sep">›</span>`;
+  if (tacticName) bc += `<span class="fw-bc-item">${esc(tacticName)}</span><span class="fw-bc-sep">›</span>`;
 
-  // Related section
+  // Related items
   let related = '';
-  const typeLabel = {phase:'Phase',tactic:'Tactic',technique:'Technique',task:'Task'}[type];
-
   if (type === 'tactic') {
     const techs = techsByTactic[id] || [];
     const tasks = tasksByTactic[id] || [];
@@ -479,16 +556,14 @@ function showDetail(type, id) {
     }
   }
 
-  // Detail link to full PHP page
-  let detailLink = '';
-  if (typeLinks[type]) {
-    detailLink = `<a class="fw-detail-link" href="${typeLinks[type](item.id)}">Full Detail Page &rarr;</a>`;
-  }
+  const detailLink = typeLinks[type]
+    ? `<a class="fw-detail-link" href="${typeLinks[type](item.id)}">Full Detail Page &rarr;</a>`
+    : '';
 
   document.getElementById('fw-detail-body').innerHTML = `
     ${bc ? `<div class="fw-bc">${bc}</div>` : ''}
-    <div class="fw-detail-type" style="color:${color}">${typeLabel}</div>
-    <div class="fw-detail-id"  style="color:${color}">${esc(item.id)}</div>
+    <div class="fw-detail-type" style="color:${accent}">${typeLabel}</div>
+    <div class="fw-detail-id">${esc(item.id)}</div>
     <div class="fw-detail-name">${esc(item.name)}</div>
     <div class="fw-detail-sum">${esc(item.summary || '')}</div>
     ${detailLink}
