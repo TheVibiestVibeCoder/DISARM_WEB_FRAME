@@ -19,7 +19,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($action === 'delete') {
         $pdo->prepare("DELETE FROM tactic WHERE disarm_id=?")->execute([$id]);
         flash('success', "Tactic $id deleted.");
-        header('Location: tactics.php'); exit;
+        header('Location: red.php'); exit;
     }
 }
 
@@ -48,7 +48,7 @@ include 'includes/header.php';
 
 <div class="breadcrumb">
   <a href="index.php">Home</a><span class="breadcrumb-sep">/</span>
-  <a href="tactics.php">Tactics</a><span class="breadcrumb-sep">/</span>
+  <a href="red.php">Red Team</a><span class="breadcrumb-sep">/</span>
   <span><?= h($tactic['disarm_id']) ?></span>
 </div>
 

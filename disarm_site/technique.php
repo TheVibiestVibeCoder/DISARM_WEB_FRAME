@@ -4,7 +4,7 @@ require_once 'includes/auth.php';
 require_once 'includes/functions.php';
 
 $id = gp('id');
-if (!$id) { header('Location: techniques.php'); exit; }
+if (!$id) { header('Location: red.php'); exit; }
 
 // ── CRUD ─────────────────────────────────────────────────────────────────────
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -19,7 +19,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($action === 'delete') {
         $pdo->prepare("DELETE FROM technique WHERE disarm_id=?")->execute([$id]);
         flash('success', "Technique $id deleted.");
-        header('Location: techniques.php'); exit;
+        header('Location: red.php'); exit;
     }
 }
 
@@ -65,7 +65,7 @@ include 'includes/header.php';
 
 <div class="breadcrumb">
   <a href="index.php">Home</a><span class="breadcrumb-sep">/</span>
-  <a href="techniques.php">Techniques</a><span class="breadcrumb-sep">/</span>
+  <a href="red.php">Red Team</a><span class="breadcrumb-sep">/</span>
   <?php if ($parent): ?>
   <a href="technique.php?id=<?= urlencode($parent['disarm_id']) ?>"><?= h($parent['disarm_id']) ?></a>
   <span class="breadcrumb-sep">/</span>

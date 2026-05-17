@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(del tactics.php techniques.php counters.php detections.php search.php groups.php tools.php resources.php playbooks.php)"
+    ]
+  }
+}

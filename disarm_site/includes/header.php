@@ -1,6 +1,7 @@
 <?php
-$current = basename($_SERVER['PHP_SELF'], '.php');
-$_title  = ($page_title ?? '') ? h($page_title) . ' — ' . SITE_TITLE : SITE_TITLE;
+$current    = basename($_SERVER['PHP_SELF'], '.php');
+$page_title = $page_title ?? '';
+$_title     = $page_title ? h($page_title) . ' — ' . SITE_TITLE : SITE_TITLE;
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -23,35 +24,13 @@ $_title  = ($page_title ?? '') ? h($page_title) . ' — ' . SITE_TITLE : SITE_TI
         <a href="framework.php" class="<?= $current === 'framework' ? 'active' : '' ?>">Matrix</a>
       </li>
       <li>
-        <a href="tactics.php" class="<?= $current === 'tactics' ? 'active' : '' ?>">Tactics</a>
+        <a href="red.php" class="<?= $current === 'red' ? 'active' : '' ?>">Red Team</a>
       </li>
-      <li class="has-drop">
-        <a href="techniques.php" class="<?= in_array($current, ['techniques','technique']) ? 'active' : '' ?>">Techniques</a>
-        <div class="drop-menu">
-          <a href="techniques.php">All Techniques</a>
-        </div>
-      </li>
-      <li class="has-drop">
-        <a href="counters.php" class="<?= in_array($current, ['counters','counter','detections']) ? 'active' : '' ?>">Counters</a>
-        <div class="drop-menu">
-          <a href="counters.php">Countermeasures</a>
-          <a href="detections.php">Detections</a>
-        </div>
+      <li>
+        <a href="blue.php" class="<?= $current === 'blue' ? 'active' : '' ?>">Blue Team</a>
       </li>
       <li>
         <a href="incidents.php" class="<?= in_array($current, ['incidents','incident']) ? 'active' : '' ?>">Incidents</a>
-      </li>
-      <li class="has-drop">
-        <a href="#" class="<?= in_array($current, ['groups','tools','resources','playbooks']) ? 'active' : '' ?>">More</a>
-        <div class="drop-menu">
-          <a href="groups.php">External Groups</a>
-          <a href="tools.php">Tools</a>
-          <a href="resources.php">Resources</a>
-          <a href="playbooks.php">Playbooks</a>
-        </div>
-      </li>
-      <li>
-        <a href="search.php" class="<?= $current === 'search' ? 'active' : '' ?>">Search</a>
       </li>
     </ul>
     <div class="nav-right">

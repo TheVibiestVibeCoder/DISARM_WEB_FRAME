@@ -4,7 +4,7 @@ require_once 'includes/auth.php';
 require_once 'includes/functions.php';
 
 $id = gp('id');
-if (!$id) { header('Location: counters.php'); exit; }
+if (!$id) { header('Location: blue.php'); exit; }
 
 // ── CRUD ─────────────────────────────────────────────────────────────────────
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -19,7 +19,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($action === 'delete') {
         $pdo->prepare("DELETE FROM counter WHERE disarm_id=?")->execute([$id]);
         flash('success', "Counter $id deleted.");
-        header('Location: counters.php'); exit;
+        header('Location: blue.php'); exit;
     }
 }
 
@@ -49,7 +49,7 @@ include 'includes/header.php';
 
 <div class="breadcrumb">
   <a href="index.php">Home</a><span class="breadcrumb-sep">/</span>
-  <a href="counters.php">Counters</a><span class="breadcrumb-sep">/</span>
+  <a href="blue.php">Blue Team</a><span class="breadcrumb-sep">/</span>
   <span><?= h($counter['disarm_id']) ?></span>
 </div>
 

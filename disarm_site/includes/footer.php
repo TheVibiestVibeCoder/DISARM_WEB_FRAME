@@ -10,7 +10,6 @@
       </span>
       <div class="footer-links">
         <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC-BY 4.0</a>
-        <a href="search.php">Search</a>
       </div>
     </div>
   </div>
