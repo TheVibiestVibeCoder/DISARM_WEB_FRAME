@@ -4,7 +4,7 @@ require_once 'includes/auth.php';
 require_once 'includes/functions.php';
 
 $id = gp('id');
-if (!$id) { header('Location: tactics.php'); exit; }
+if (!$id) { header('Location: red.php'); exit; }
 
 // ── CRUD ─────────────────────────────────────────────────────────────────────
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {

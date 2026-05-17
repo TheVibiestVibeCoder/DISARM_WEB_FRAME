@@ -407,12 +407,10 @@ include 'includes/header.php';
           <button id="btn-blue" class="btn btn-sm"           onclick="setMode('blue')">Blue Team</button>
         </div>
         <span class="fw-red">
-          <a href="techniques.php" class="btn btn-ghost btn-sm">All Techniques</a>
-          <a href="tactics.php"    class="btn btn-ghost btn-sm">All Tactics</a>
+          <a href="red.php" class="btn btn-ghost btn-sm">Red Team</a>
         </span>
         <span class="fw-blue">
-          <a href="counters.php"   class="btn btn-ghost btn-sm">All Counters</a>
-          <a href="detections.php" class="btn btn-ghost btn-sm">All Detections</a>
+          <a href="blue.php" class="btn btn-ghost btn-sm">Blue Team</a>
         </span>
       </div>
     </div>

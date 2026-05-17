@@ -11,26 +11,37 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($act === 'add-counter') {
         $did = strtoupper(trim(pp('disarm_id'))); $name = pp('name');
         if ($did && $name) {
-            $pdo->prepare("INSERT INTO counter (disarm_id,name,tactic_id,metatechnique_id,summary) VALUES (?,?,?,?,?)")
-                ->execute([$did, $name, pp('tactic_id') ?: null, pp('metatechnique_id') ?: null, pp('summary')]);
-            flash('success', "Counter $did added.");
-            header('Location: counter.php?id=' . urlencode($did)); exit;
-        }
-        flash('error', 'ID and Name are required.');
+            try {
+                $pdo->prepare("INSERT INTO counter (disarm_id,name,tactic_id,metatechnique_id,summary) VALUES (?,?,?,?,?)")
+                    ->execute([$did, $name, pp('tactic_id') ?: null, pp('metatechnique_id') ?: null, pp('summary')]);
+                flash('success', "Counter $did added.");
+                header('Location: counter.php?id=' . urlencode($did)); exit;
+            } catch (Exception $e) {
+                flash('error', 'Could not add counter: ' . $e->getMessage());
+            }
+        } else { flash('error', 'ID and Name are required.'); }
         header('Location: blue.php?add=counter'); exit;
     }
     if ($act === 'add-detection') {
         $did = strtoupper(trim(pp('disarm_id'))); $name = pp('name');
         if ($did && $name) {
-            $pdo->prepare("INSERT INTO detection (disarm_id,name,tactic_id,summary) VALUES (?,?,?,?)")
-                ->execute([$did, $name, pp('tactic_id') ?: null, pp('summary')]);
-            flash('success', "Detection $did added.");
+            try {
+                $pdo->prepare("INSERT INTO detection (disarm_id,name,tactic_id,summary) VALUES (?,?,?,?)")
+                    ->execute([$did, $name, pp('tactic_id') ?: null, pp('summary')]);
+                flash('success', "Detection $did added.");
+            } catch (Exception $e) {
+                flash('error', 'Could not add detection: ' . $e->getMessage());
+            }
         } else { flash('error', 'ID and Name are required.'); }
         header('Location: blue.php'); exit;
     }
     if ($act === 'delete-detection') {
-        $pdo->prepare("DELETE FROM detection WHERE disarm_id=?")->execute([pp('disarm_id')]);
-        flash('success', 'Detection deleted.');
+        try {
+            $pdo->prepare("DELETE FROM detection WHERE disarm_id=?")->execute([pp('disarm_id')]);
+            flash('success', 'Detection deleted.');
+        } catch (Exception $e) {
+            flash('error', 'Could not delete: ' . $e->getMessage());
+        }
         header('Location: blue.php'); exit;
     }
 }
@@ -66,9 +77,13 @@ $det_sql    = "SELECT disarm_id, name, tactic_id, summary FROM detection WHERE 1
 $det_params = [];
 if ($filter_q) { $det_sql .= " AND (name LIKE ? OR summary LIKE ?)"; $det_params[] = "%$filter_q%"; $det_params[] = "%$filter_q%"; }
 $det_sql .= " ORDER BY disarm_id";
-$det_stmt = $pdo->prepare($det_sql);
-$det_stmt->execute($det_params);
-$detections = $det_stmt->fetchAll();
+try {
+    $det_stmt = $pdo->prepare($det_sql);
+    $det_stmt->execute($det_params);
+    $detections = $det_stmt->fetchAll();
+} catch (Exception $e) {
+    $detections = [];
+}
 
 include 'includes/header.php';
 ?>

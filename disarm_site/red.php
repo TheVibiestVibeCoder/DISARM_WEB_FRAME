@@ -11,19 +11,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($act === 'add-tactic') {
         $did = strtoupper(trim(pp('disarm_id'))); $name = pp('name');
         if ($did && $name) {
-            $pdo->prepare("INSERT INTO tactic (disarm_id,name,phase_id,rank,summary) VALUES (?,?,?,?,?)")
-                ->execute([$did, $name, pp('phase_id') ?: null, pp('rank') ?: null, pp('summary')]);
-            flash('success', "Tactic $did added.");
+            try {
+                $pdo->prepare("INSERT INTO tactic (disarm_id,name,phase_id,rank,summary) VALUES (?,?,?,?,?)")
+                    ->execute([$did, $name, pp('phase_id'), pp('rank'), pp('summary')]);
+                flash('success', "Tactic $did added.");
+            } catch (Exception $e) {
+                flash('error', 'Could not add tactic: ' . $e->getMessage());
+            }
         } else { flash('error', 'ID and Name are required.'); }
         header('Location: red.php'); exit;
     }
     if ($act === 'add-technique') {
         $did = strtoupper(trim(pp('disarm_id'))); $name = pp('name');
         if ($did && $name) {
-            $pdo->prepare("INSERT INTO technique (disarm_id,name,tactic_id,summary) VALUES (?,?,?,?)")
-                ->execute([$did, $name, pp('tactic_id') ?: null, pp('summary')]);
-            flash('success', "Technique $did added.");
-            header('Location: technique.php?id=' . urlencode($did)); exit;
+            try {
+                $pdo->prepare("INSERT INTO technique (disarm_id,name,tactic_id,summary) VALUES (?,?,?,?)")
+                    ->execute([$did, $name, pp('tactic_id'), pp('summary')]);
+                flash('success', "Technique $did added.");
+                header('Location: technique.php?id=' . urlencode($did)); exit;
+            } catch (Exception $e) {
+                flash('error', 'Could not add technique: ' . $e->getMessage());
+                header('Location: red.php?add=technique'); exit;
+            }
         }
         flash('error', 'ID and Name are required.');
         header('Location: red.php?add=technique'); exit;
