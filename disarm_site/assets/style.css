@@ -651,3 +651,205 @@ mark { background: rgba(13,13,13,0.1); padding: 0 2px; }
 
 /* Login page needs no top padding since there's no nav */
 .login-wrap { margin-top: -60px; }
+
+/* ─── Framework Matrix ──────────────────────────────────────────────────────── */
+
+/* Legend */
+.matrix-legend {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    flex-wrap: wrap;
+    margin-bottom: clamp(32px,4vw,52px);
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--border);
+}
+.legend-item { display: flex; align-items: center; gap: 6px; }
+.legend-dot {
+    width: 10px; height: 10px;
+    display: inline-block;
+}
+.legend-dot-p01 { background: #1a3a1a; }
+.legend-dot-p02 { background: #7A1515; }
+.legend-dot-p03 { background: #0F2D4A; }
+.legend-label {
+    font-size: 10px; font-weight: 600;
+    letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--muted);
+}
+.legend-swatch {
+    display: inline-block;
+    width: 28px; height: 10px;
+    border: 1px solid var(--border);
+}
+.legend-parent { background: rgba(122,21,21,0.08); }
+.legend-sub    { background: rgba(122,21,21,0.03); }
+.legend-sep {
+    width: 1px; height: 16px;
+    background: var(--border);
+    margin: 0 4px;
+}
+
+/* Scroll shell */
+.matrix-scroll {
+    overflow-x: auto;
+    overflow-y: visible;
+    padding: 0 clamp(20px,5vw,80px);
+    padding-bottom: clamp(40px,5vw,64px);
+    -webkit-overflow-scrolling: touch;
+}
+
+/* Inner wrapper: grows to fit all columns */
+.matrix-inner {
+    display: inline-block;
+    min-width: 100%;
+    vertical-align: top;
+}
+
+/* Column width token — change one place to resize all */
+:root { --col: 176px; }
+
+/* ── Phase header row ── */
+.matrix-phase-row {
+    display: flex;
+    border-bottom: 2px solid var(--dark);
+}
+.matrix-phase-cell {
+    flex: 0 0 calc(var(--cols) * var(--col));
+    width: calc(var(--cols) * var(--col));
+    padding: 9px 12px;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--white);
+    border-right: 2px solid rgba(245,241,235,0.15);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.matrix-phase-cell:last-child { border-right: none; }
+.matrix-phase-id {
+    font-family: 'SF Mono','Fira Code','Courier New',monospace;
+    background: rgba(245,241,235,0.12);
+    padding: 2px 5px;
+    font-size: 8px;
+    letter-spacing: 0.05em;
+}
+
+/* Phase colour bands */
+.matrix-phase-P01 { background: #1a3a1a; }
+.matrix-phase-P02 { background: #7A1515; }
+.matrix-phase-P03 { background: #0F2D4A; }
+
+/* ── Tactic header row ── */
+.matrix-tactic-row {
+    display: flex;
+    border-bottom: 1px solid var(--border);
+}
+.matrix-tactic-hd {
+    flex: 0 0 var(--col);
+    width: var(--col);
+    padding: 0;
+    border-right: 1px solid var(--border);
+}
+.matrix-tactic-hd:last-child { border-right: none; }
+.matrix-tactic-link {
+    display: block;
+    padding: 10px 11px;
+    text-decoration: none;
+    height: 100%;
+    transition: opacity 0.18s;
+}
+.matrix-tactic-link:hover { opacity: 0.7; }
+.matrix-tactic-id {
+    font-family: 'SF Mono','Fira Code','Courier New',monospace;
+    font-size: 9px;
+    font-weight: 500;
+    letter-spacing: 0.05em;
+    display: block;
+    margin-bottom: 5px;
+}
+.matrix-tactic-name {
+    font-size: 11px;
+    font-weight: 500;
+    line-height: 1.3;
+    letter-spacing: 0.01em;
+    display: block;
+}
+
+/* Tactic header tints by phase */
+.matrix-phase-P01-tactic { background: rgba(26,58,26,0.08); }
+.matrix-phase-P01-tactic .matrix-tactic-id   { color: #1a3a1a; }
+.matrix-phase-P01-tactic .matrix-tactic-name { color: #1a3a1a; }
+
+.matrix-phase-P02-tactic { background: rgba(122,21,21,0.07); }
+.matrix-phase-P02-tactic .matrix-tactic-id   { color: var(--red-fw); }
+.matrix-phase-P02-tactic .matrix-tactic-name { color: var(--red-fw); }
+
+.matrix-phase-P03-tactic { background: rgba(15,45,74,0.08); }
+.matrix-phase-P03-tactic .matrix-tactic-id   { color: var(--blue-fw); }
+.matrix-phase-P03-tactic .matrix-tactic-name { color: var(--blue-fw); }
+
+/* ── Technique column rows ── */
+.matrix-cols-row {
+    display: flex;
+    align-items: flex-start;
+}
+.matrix-col {
+    flex: 0 0 var(--col);
+    width: var(--col);
+    border-right: 1px solid var(--border);
+    min-height: 200px;
+}
+.matrix-col:last-child { border-right: none; }
+
+.matrix-empty {
+    padding: 12px 11px;
+    font-size: 11px;
+    color: var(--border);
+}
+
+/* Technique cell */
+.matrix-tech {
+    display: block;
+    padding: 6px 10px;
+    border-bottom: 1px solid var(--border);
+    text-decoration: none;
+    background: rgba(122,21,21,0.04);
+    transition: background 0.15s, color 0.15s;
+}
+.matrix-tech:hover {
+    background: rgba(122,21,21,0.13);
+}
+.matrix-tech-id {
+    font-family: 'SF Mono','Fira Code','Courier New',monospace;
+    font-size: 8px;
+    font-weight: 500;
+    color: var(--muted);
+    display: block;
+    margin-bottom: 2px;
+    letter-spacing: 0.04em;
+}
+.matrix-tech-name {
+    font-size: 10.5px;
+    font-weight: 400;
+    line-height: 1.35;
+    color: var(--text);
+    display: block;
+}
+.matrix-tech:hover .matrix-tech-name { color: var(--red-fw); }
+.matrix-tech:hover .matrix-tech-id   { color: var(--red-fw); opacity: 0.6; }
+
+/* Sub-technique cell */
+.matrix-tech-sub {
+    padding-left: 18px;
+    background: rgba(122,21,21,0.015);
+    border-left: 2px solid rgba(122,21,21,0.18);
+}
+.matrix-tech-sub .matrix-tech-id { color: rgba(122,21,21,0.45); }
+.matrix-tech-sub:hover { background: rgba(122,21,21,0.08); }
+
+@media (max-width: 960px) {
+    :root { --col: 148px; }
+}

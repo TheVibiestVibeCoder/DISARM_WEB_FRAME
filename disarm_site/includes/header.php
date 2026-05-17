@@ -20,6 +20,9 @@ $_title  = ($page_title ?? '') ? h($page_title) . ' — ' . SITE_TITLE : SITE_TI
     <a class="nav-logo" href="index.php">DISARM</a>
     <ul class="nav-links">
       <li>
+        <a href="framework.php" class="<?= $current === 'framework' ? 'active' : '' ?>">Matrix</a>
+      </li>
+      <li>
         <a href="tactics.php" class="<?= $current === 'tactics' ? 'active' : '' ?>">Tactics</a>
       </li>
       <li class="has-drop">
