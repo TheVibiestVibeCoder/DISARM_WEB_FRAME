@@ -1,7 +1,9 @@
 {
   "permissions": {
     "allow": [
-      "Bash(python -c ' *)"
+      "Bash(python -c ' *)",
+      "Bash(mysql -h localhost -u markussc_DISARM_USER -pF3HZbozFO!TT markussc_DISARM -e ' *)",
+      "PowerShell(& \"mysql\" --version 2>&1)"
     ]
   }
 }

@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DISARM Framework Matrix</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', Arial, sans-serif; background: #0f1117; color: #e0e0e0; min-height: 100vh; }
+
+  header { background: #1a1d27; border-bottom: 2px solid #2a2d3e; padding: 16px 24px; display: flex; align-items: center; gap: 16px; }
+  header h1 { font-size: 1.4rem; font-weight: 700; color: #fff; letter-spacing: 1px; }
+  header p { font-size: 0.8rem; color: #888; }
+
+  .legend { display: flex; gap: 10px; padding: 10px 24px; background: #1a1d27; border-bottom: 1px solid #2a2d3e; flex-wrap: wrap; }
+  .legend-item { display: flex; align-items: center; gap: 5px; font-size: 0.72rem; color: #aaa; }
+  .legend-dot { width: 10px; height: 10px; border-radius: 2px; }
+
+  .matrix-container { padding: 20px 16px; overflow-x: auto; }
+  .matrix { display: grid; grid-template-columns: repeat(4, minmax(280px, 1fr)); gap: 12px; min-width: 1140px; }
+
+  .phase-col { display: flex; flex-direction: column; gap: 8px; }
+
+  .phase-header { padding: 12px 14px; border-radius: 6px 6px 0 0; font-weight: 700; font-size: 0.85rem; letter-spacing: 1px; text-transform: uppercase; display: flex; justify-content: space-between; align-items: center; }
+  .phase-header .phase-id { font-size: 1.1rem; opacity: 0.85; }
+  .phase-header .phase-count { font-size: 0.7rem; background: rgba(255,255,255,0.15); padding: 2px 6px; border-radius: 10px; }
+
+  .p01 { background: #1a4f7a; border: 1px solid #2a6fa0; }
+  .p02 { background: #7a4a10; border: 1px solid #b06820; }
+  .p03 { background: #7a1a1a; border: 1px solid #a03030; }
+  .p04 { background: #1a6a3a; border: 1px solid #2a8a50; }
+
+  .p01-bg { border: 1px solid #2a6fa040; }
+  .p02-bg { border: 1px solid #b0682040; }
+  .p03-bg { border: 1px solid #a0303040; }
+  .p04-bg { border: 1px solid #2a8a5040; }
+
+  .tactic-card { background: #1e2130; border-radius: 0 0 6px 6px; overflow: hidden; }
+  .tactic-card + .tactic-card { margin-top: 6px; border-radius: 6px; }
+
+  .tactic-header { padding: 10px 12px; cursor: pointer; display: flex; justify-content: space-between; align-items: flex-start; transition: background 0.15s; user-select: none; }
+  .tactic-header:hover { background: #272b3f; }
+  .tactic-header.active { background: #272b3f; }
+
+  .tactic-meta { flex: 1; }
+  .tactic-id { font-size: 0.68rem; font-weight: 700; color: #888; letter-spacing: 0.5px; font-family: monospace; }
+  .tactic-name { font-size: 0.82rem; font-weight: 600; color: #d0d8f0; margin-top: 2px; line-height: 1.3; }
+  .tactic-tech-count { font-size: 0.65rem; color: #666; margin-top: 3px; }
+
+  .tactic-arrow { font-size: 0.7rem; color: #555; margin-left: 6px; transition: transform 0.2s; flex-shrink: 0; margin-top: 3px; }
+  .tactic-arrow.open { transform: rotate(90deg); color: #888; }
+
+  .techniques-panel { display: none; padding: 8px; background: #171a27; border-top: 1px solid #2a2d3e; }
+  .techniques-panel.open { display: block; }
+
+  .tech-item { padding: 5px 8px; margin: 2px 0; border-radius: 4px; cursor: pointer; display: flex; gap: 6px; align-items: flex-start; transition: background 0.1s; }
+  .tech-item:hover { background: #2a2d3e; }
+  .tech-item.sub { padding-left: 20px; }
+  .tech-item.sub .tech-id { color: #666; }
+
+  .tech-id { font-size: 0.63rem; font-weight: 700; font-family: monospace; color: #6a9fd8; flex-shrink: 0; padding-top: 1px; min-width: 62px; }
+  .tech-name { font-size: 0.74rem; color: #b0bcd8; line-height: 1.35; }
+
+  .tasks-section { padding: 8px; background: #14172200; border-top: 1px dashed #2a2d3e; }
+  .tasks-label { font-size: 0.62rem; text-transform: uppercase; letter-spacing: 1px; color: #555; margin-bottom: 4px; padding: 0 4px; }
+  .task-item { padding: 4px 8px; margin: 2px 0; border-radius: 4px; cursor: pointer; display: flex; gap: 6px; align-items: flex-start; transition: background 0.1s; }
+  .task-item:hover { background: #2a2d3e; }
+  .task-id { font-size: 0.63rem; font-weight: 700; font-family: monospace; color: #8a7fc8; flex-shrink: 0; padding-top: 1px; min-width: 62px; }
+  .task-name { font-size: 0.72rem; color: #9090b0; line-height: 1.3; }
+
+  /* Detail Panel */
+  .detail-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 100; cursor: pointer; }
+  .detail-overlay.open { display: block; }
+  .detail-panel { position: fixed; right: 0; top: 0; height: 100%; width: 420px; max-width: 95vw; background: #1a1d2e; border-left: 2px solid #2a2d4e; z-index: 101; overflow-y: auto; padding: 24px; cursor: default; transform: translateX(100%); transition: transform 0.2s; }
+  .detail-panel.open { transform: translateX(0); }
+  .detail-close { position: absolute; top: 14px; right: 16px; cursor: pointer; font-size: 1.2rem; color: #666; background: none; border: none; }
+  .detail-close:hover { color: #aaa; }
+  .detail-type { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 4px; }
+  .detail-id { font-family: monospace; font-size: 1rem; font-weight: 700; margin-bottom: 6px; }
+  .detail-name { font-size: 1.1rem; font-weight: 700; color: #fff; margin-bottom: 12px; line-height: 1.4; }
+  .detail-summary { font-size: 0.8rem; color: #9090a8; line-height: 1.6; }
+  .detail-divider { border: none; border-top: 1px solid #2a2d4e; margin: 16px 0; }
+  .detail-section-title { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 1.5px; color: #666; margin-bottom: 8px; }
+  .detail-breadcrumb { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-bottom: 16px; }
+  .breadcrumb-item { font-size: 0.72rem; padding: 3px 8px; border-radius: 12px; font-weight: 600; }
+  .breadcrumb-sep { color: #444; font-size: 0.8rem; }
+  .bc-phase { background: #1a3a5a; color: #6ab0e0; }
+  .bc-tactic { background: #2a2040; color: #9080d0; }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>DISARM Framework Matrix</h1>
+    <p>Phases &rarr; Tactics &rarr; Techniques &rarr; Tasks &nbsp;&middot;&nbsp; Click tactics to expand &nbsp;&middot;&nbsp; Click items for details</p>
+  </div>
+</header>
+
+<div class="legend">
+  <div class="legend-item"><div class="legend-dot" style="background:#2a6fa0"></div> Phase</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#3a4060"></div> Tactic</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#6a9fd8"></div> Technique</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#8a7fc8"></div> Sub-technique</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#8a7fa8"></div> Task</div>
+</div>
+
+<div class="matrix-container">
+  <div class="matrix" id="matrix"></div>
+</div>
+
+<div class="detail-overlay" id="overlay" onclick="closeDetail()"></div>
+<div class="detail-panel" id="detailPanel">
+  <button class="detail-close" onclick="closeDetail()">&#10005;</button>
+  <div id="detailContent"></div>
+</div>
+
+<script>
+const phases = [
+  {id:'P01', name:'Plan',    color:'p01', desc:'Envision the desired outcome. Lay out effective ways of achieving it.'},
+  {id:'P02', name:'Prepare', color:'p02', desc:'Activities conducted before execution to improve the ability to conduct the action.'},
+  {id:'P03', name:'Execute', color:'p03', desc:'Run the action, from initial exposure to wrap-up and/or maintaining presence.'},
+  {id:'P04', name:'Assess',  color:'p04', desc:'Evaluate effectiveness of action, for use in future plans.'},
+];
+
+const tactics = [
+  {id:'TA01', phase:'P01', name:'Plan Strategy',                    summary:'Define the desired end state, i.e. the set of required conditions that defines achievement of all objectives.'},
+  {id:'TA02', phase:'P01', name:'Plan Objectives',                  summary:'Set clearly defined, measurable, and achievable objectives. The objective statement should not specify the way and means of accomplishment but rather the goal the threat actor wishes to achieve.'},
+  {id:'TA13', phase:'P01', name:'Target Audience Analysis',         summary:'Identifying and analysing the target audience examines target audience member locations, political affiliations, financial situations, and other attributes.'},
+  {id:'TA05', phase:'P02', name:'Microtarget',                      summary:'Actions taken which help target content to specific audiences identified and analysed as part of TA13: Target Audience Analysis.'},
+  {id:'TA06', phase:'P02', name:'Develop Content',                  summary:'Create or acquire text, images, and other content.'},
+  {id:'TA07', phase:'P02', name:'Select Channels & Affordances',    summary:'Selecting platforms and affordances assesses which online or offline platforms and their associated affordances maximise an influence operation\'s ability to reach its target audience.'},
+  {id:'TA14', phase:'P02', name:'Develop Narratives',               summary:'The promotion of beneficial master narratives is perhaps the most effective method for achieving long-term strategic narrative dominance.'},
+  {id:'TA15', phase:'P02', name:'Establish Assets',                 summary:'Establishing information assets generates messaging tools, including social media accounts, operation personnel, and organisations.'},
+  {id:'TA16', phase:'P02', name:'Establish Legitimacy',             summary:'Establish assets that create trust.'},
+  {id:'TA08', phase:'P03', name:'Conduct Pump Priming',             summary:'Release content on a targeted small scale, prior to general release. Used for preparation before broader release and as message honing.'},
+  {id:'TA09', phase:'P03', name:'Deliver Content',                  summary:'Release content to general public or larger population.'},
+  {id:'TA10', phase:'P03', name:'Drive Offline Activity',           summary:'Move incident/campaign from online to offline. Encouraging users to engage in the physical information space or offline world.'},
+  {id:'TA11', phase:'P03', name:'Persist in Information Env.',      summary:'Taking measures that allow an operation to maintain its presence and avoid takedown by an external entity.'},
+  {id:'TA17', phase:'P03', name:'Maximise Exposure',                summary:'Maximise exposure of the target audience to incident/campaign content via flooding, amplifying, and cross-posting.'},
+  {id:'TA18', phase:'P03', name:'Drive Online Harms',               summary:'Actions taken by an influence operation to harm their opponents in online spaces through harassment, suppression, and controlling the information space.'},
+  {id:'TA12', phase:'P04', name:'Assess Effectiveness',             summary:'Assess effectiveness of action, for use in future plans.'},
+];
+
+const techniques = [
+  // TA01
+  {id:'T0073',     tactic:'TA01', name:'Determine Target Audiences',        sub:false, summary:'Determining the target audiences (segments of the population) who will receive campaign narratives and artefacts intended to achieve the strategic ends.'},
+  {id:'T0074',     tactic:'TA01', name:'Determine Strategic Ends',          sub:false, summary:'These are the long-term end-states the campaign aims to bring about. They typically involve an advantageous position vis-à-vis competitors in terms of power or influence.'},
+  {id:'T0074.001', tactic:'TA01', name:'Geopolitical Advantage',            sub:true,  summary:'Favourable position on the international stage in terms of great power politics or regional rivalry.'},
+  {id:'T0074.002', tactic:'TA01', name:'Domestic Political Advantage',      sub:true,  summary:'Favourable position vis-à-vis national or sub-national political opponents.'},
+  {id:'T0074.003', tactic:'TA01', name:'Economic Advantage',                sub:true,  summary:'Favourable position domestically or internationally in the realms of commerce, trade, finance, industry.'},
+  {id:'T0074.004', tactic:'TA01', name:'Ideological Advantage',             sub:true,  summary:'Favourable position domestically or internationally in the market for ideas, beliefs, and world views.'},
+  // TA02
+  {id:'T0002',     tactic:'TA02', name:'Facilitate State Propaganda',       sub:false, summary:'Organise citizens around pro-state messaging. Coordinate paid or volunteer groups to push state propaganda.'},
+  {id:'T0066',     tactic:'TA02', name:'Degrade Adversary',                 sub:false, summary:'Plan to degrade an adversary\'s image or ability to act. This could include preparation and use of harmful information about the adversary.'},
+  {id:'T0075',     tactic:'TA02', name:'Dismiss',                           sub:false, summary:'Push back against criticism by dismissing your critics. Argue that the critics use a different standard or that their criticism is biased.'},
+  {id:'T0075.001', tactic:'TA02', name:'Discredit Credible Sources',        sub:true,  summary:'Plan to delegitimize the media landscape and degrade public trust in reporting, by discrediting credible sources.'},
+  {id:'T0076',     tactic:'TA02', name:'Distort',                           sub:false, summary:'Twist the narrative. Take information, or artefacts like images, and change the framing around them.'},
+  {id:'T0077',     tactic:'TA02', name:'Distract',                          sub:false, summary:'Shift attention to a different narrative or actor, for instance by accusing critics of the same activity.'},
+  {id:'T0078',     tactic:'TA02', name:'Dismay',                            sub:false, summary:'Threaten the critic or narrator of events. For instance, threaten journalists or news outlets reporting on a story.'},
+  {id:'T0079',     tactic:'TA02', name:'Divide',                            sub:false, summary:'Create conflict between subgroups, to widen divisions in a community.'},
+  {id:'T0135',     tactic:'TA02', name:'Undermine',                         sub:false, summary:'Weaken, debilitate, or subvert a target or their actions. May include disparaging, sabotaging, or thwarting an opponent.'},
+  {id:'T0135.001', tactic:'TA02', name:'Smear',                             sub:true,  summary:'Denigrate, disparage, or discredit an opponent. A common tactical objective in political campaigns.'},
+  {id:'T0135.002', tactic:'TA02', name:'Thwart',                            sub:true,  summary:'Prevent the successful outcome of a policy, operation, or initiative.'},
+  {id:'T0135.003', tactic:'TA02', name:'Subvert',                           sub:true,  summary:'Sabotage, destroy, or damage a system, process, or relationship.'},
+  {id:'T0135.004', tactic:'TA02', name:'Polarise',                          sub:true,  summary:'Cause a target audience to divide into two completely opposing groups.'},
+  {id:'T0136',     tactic:'TA02', name:'Cultivate Support',                 sub:false, summary:'Grow or maintain the base of support for the actor, ally, or action, including reputation management and public relations.'},
+  {id:'T0136.001', tactic:'TA02', name:'Defend Reputation',                 sub:true,  summary:'Preserve a positive perception in the public\'s mind following an accusation or adverse event.'},
+  {id:'T0136.002', tactic:'TA02', name:'Justify Action',                    sub:true,  summary:'Convince others to exonerate you of a perceived wrongdoing.'},
+  {id:'T0136.003', tactic:'TA02', name:'Energise Supporters',               sub:true,  summary:'Raise the morale of those who support the organisation or group. Invigorate constituents with zeal for the mission.'},
+  {id:'T0136.004', tactic:'TA02', name:'Boost Reputation',                  sub:true,  summary:'Elevate the estimation of the actor in the public\'s mind. Improve their image or standing.'},
+  {id:'T0136.005', tactic:'TA02', name:'Cultivate Support for Initiative',  sub:true,  summary:'Elevate or fortify the public backing for a policy, operation, or idea.'},
+  {id:'T0136.006', tactic:'TA02', name:'Cultivate Support for Ally',        sub:true,  summary:'Elevate or fortify the public backing for a partner.'},
+  {id:'T0136.007', tactic:'TA02', name:'Recruit Members',                   sub:true,  summary:'Motivate followers to join or subscribe as members of the team.'},
+  {id:'T0136.008', tactic:'TA02', name:'Increase Prestige',                 sub:true,  summary:'Improve personal standing within a community. Gain fame, approbation, or notoriety.'},
+  {id:'T0137',     tactic:'TA02', name:'Make Money',                        sub:false, summary:'Profit from disinformation, conspiracy theories, or online harm. May also be a way to sustain a political campaign.'},
+  {id:'T0137.001', tactic:'TA02', name:'Generate Ad Revenue',               sub:true,  summary:'Earn income from digital advertisements published alongside inauthentic content.'},
+  {id:'T0137.002', tactic:'TA02', name:'Scam',                              sub:true,  summary:'Defraud a target or trick a target into doing something that benefits the attacker.'},
+  {id:'T0137.003', tactic:'TA02', name:'Raise Funds',                       sub:true,  summary:'Solicit donations for a cause. Popular conspiracy theorists can attract financial contributions from followers.'},
+  {id:'T0137.004', tactic:'TA02', name:'Sell Items under False Pretences',  sub:true,  summary:'Offer products for sale under false pretences. Campaigns may hijack or create causes built on disinformation.'},
+  {id:'T0137.005', tactic:'TA02', name:'Extort',                            sub:true,  summary:'Coerce money or favours from a target by threatening to expose or corrupt information.'},
+  {id:'T0137.006', tactic:'TA02', name:'Manipulate Stocks',                 sub:true,  summary:'Artificially inflate or deflate the price of stocks or other financial instruments.'},
+  {id:'T0138',     tactic:'TA02', name:'Motivate to Act',                   sub:false, summary:'Persuade, impel, or provoke the target to behave in a specific manner favourable to the attacker.'},
+  {id:'T0138.001', tactic:'TA02', name:'Encourage',                         sub:true,  summary:'Inspire, animate, or exhort a target to act using propaganda, disinformation, or conspiracy theories.'},
+  {id:'T0138.002', tactic:'TA02', name:'Provoke',                           sub:true,  summary:'Instigate, incite, or arouse a target to act. Social media manipulators exploit moral outrage.'},
+  {id:'T0138.003', tactic:'TA02', name:'Compel',                            sub:true,  summary:'Force target to take an action or to stop taking an action it has already started.'},
+  {id:'T0139',     tactic:'TA02', name:'Dissuade from Acting',              sub:false, summary:'Discourage, deter, or inhibit the target from actions which would be unfavourable to the attacker.'},
+  {id:'T0139.001', tactic:'TA02', name:'Discourage',                        sub:true,  summary:'Make a target disinclined or reluctant to act.'},
+  {id:'T0139.002', tactic:'TA02', name:'Silence',                           sub:true,  summary:'Intimidate or incentivise target into remaining silent or prevent target from speaking out.'},
+  {id:'T0139.003', tactic:'TA02', name:'Deter',                             sub:true,  summary:'Prevent target from taking an action for fear of the consequences.'},
+  {id:'T0140',     tactic:'TA02', name:'Cause Harm',                        sub:false, summary:'Persecute, malign, or inflict pain upon a target. Objective may be to cause fear or emotional distress.'},
+  {id:'T0140.001', tactic:'TA02', name:'Defame',                            sub:true,  summary:'Attempt to damage the target\'s personal reputation by impugning their character.'},
+  {id:'T0140.002', tactic:'TA02', name:'Intimidate',                        sub:true,  summary:'Coerce, bully, or frighten the target. An influence operation may use intimidation to compel the target.'},
+  {id:'T0140.003', tactic:'TA02', name:'Spread Hate',                       sub:true,  summary:'Publish and/or propagate demeaning content targeting an individual or group with intent to cause distress.'},
+  // TA13
+  {id:'T0072',     tactic:'TA13', name:'Segment Audiences',                     sub:false, summary:'Create audience segmentations by features of interest including political affiliation, geographic location, income, demographics, and psychographics.'},
+  {id:'T0072.001', tactic:'TA13', name:'Geographic Segmentation',               sub:true,  summary:'Target populations in a specific geographic location, such as a region, state, or city.'},
+  {id:'T0072.002', tactic:'TA13', name:'Demographic Segmentation',              sub:true,  summary:'Target populations based on demographic segmentation, including age, gender, and income.'},
+  {id:'T0072.003', tactic:'TA13', name:'Economic Segmentation',                 sub:true,  summary:'Target populations based on their income bracket, wealth, or other financial division.'},
+  {id:'T0072.004', tactic:'TA13', name:'Psychographic Segmentation',            sub:true,  summary:'Target populations based on psychographic segmentation using audience values and decision-making processes.'},
+  {id:'T0072.005', tactic:'TA13', name:'Political Segmentation',                sub:true,  summary:'Target populations based on their political affiliations, especially when aiming to manipulate voting or change policy.'},
+  {id:'T0080',     tactic:'TA13', name:'Map Target Audience Info. Env.',         sub:false, summary:'Mapping the information environment analyses social media analytics, web traffic, and media surveys to determine most accessible channels.'},
+  {id:'T0080.001', tactic:'TA13', name:'Monitor Social Media Analytics',        sub:true,  summary:'Use social media analytics to determine which factors increase content exposure to the target audience.'},
+  {id:'T0080.002', tactic:'TA13', name:'Evaluate Media Surveys',                sub:true,  summary:'Evaluate own or third-party media surveys to determine what type of content appeals to the target audience.'},
+  {id:'T0080.003', tactic:'TA13', name:'Identify Trending Topics/Hashtags',     sub:true,  summary:'Identify trending hashtags on social media platforms for later use in boosting operation content.'},
+  {id:'T0080.004', tactic:'TA13', name:'Conduct Web Traffic Analysis',          sub:true,  summary:'Determine which search engines, keywords, websites, and advertisements gain most traction with the target audience.'},
+  {id:'T0080.005', tactic:'TA13', name:'Assess Degree/Type of Media Access',    sub:true,  summary:'Survey a target audience\'s Internet availability and degree of media freedom to determine content accessibility.'},
+  {id:'T0081',     tactic:'TA13', name:'Identify Social/Technical Vuln.',        sub:false, summary:'Identifying social and technical vulnerabilities determines weaknesses within the target audience information environment for later exploitation.'},
+  {id:'T0081.001', tactic:'TA13', name:'Find Echo Chambers',                    sub:true,  summary:'Find or plan to create areas where individuals only engage with people they agree with.'},
+  {id:'T0081.002', tactic:'TA13', name:'Identify Data Voids',                   sub:true,  summary:'A data void refers to a word or phrase that results in little, manipulative, or low-quality search engine data.'},
+  {id:'T0081.003', tactic:'TA13', name:'Identify Existing Prejudices',          sub:true,  summary:'Exploit existing racial, religious, demographic, or social prejudices to further polarise the target audience.'},
+  {id:'T0081.004', tactic:'TA13', name:'Identify Existing Fissures',            sub:true,  summary:'Identify existing fissures to pit target populations against one another.'},
+  {id:'T0081.005', tactic:'TA13', name:'Identify Conspiracy Narratives',        sub:true,  summary:'Assess preexisting conspiracy theories or suspicions in a population to identify existing narratives that support operational objectives.'},
+  {id:'T0081.006', tactic:'TA13', name:'Identify Wedge Issues',                 sub:true,  summary:'Exploit wedge issues by intentionally polarising the public along the wedge issue line.'},
+  {id:'T0081.007', tactic:'TA13', name:'Identify Target Audience Adversaries',  sub:true,  summary:'Identify or create a real or imaginary adversary to centre operation narratives against.'},
+  {id:'T0081.008', tactic:'TA13', name:'Identify Media System Vulnerabilities', sub:true,  summary:'Exploit existing weaknesses in a target\'s media system including biases among media agencies.'},
+  // TA05
+  {id:'T0016',     tactic:'TA05', name:'Create Clickbait',                   sub:false, summary:'Create attention grabbing headlines (outrage, doubt, humour) required to drive traffic and engagement.'},
+  {id:'T0018',     tactic:'TA05', name:'Purchase Targeted Advertisements',   sub:false, summary:'Create or fund advertisements targeted at specific populations.'},
+  {id:'T0101',     tactic:'TA05', name:'Create Localised Content',           sub:false, summary:'Content that appeals to a specific community, often in defined geographic areas, using local language and dialects.'},
+  {id:'T0102',     tactic:'TA05', name:'Leverage Echo Chambers',             sub:false, summary:'Create isolated areas of the internet by aggregating individuals into a single target audience based on shared interests.'},
+  {id:'T0102.001', tactic:'TA05', name:'Use Existing Echo Chambers',         sub:true,  summary:'Use existing Echo Chambers/Filter Bubbles.'},
+  {id:'T0102.002', tactic:'TA05', name:'Create Echo Chambers',               sub:true,  summary:'Create new Echo Chambers/Filter Bubbles.'},
+  {id:'T0102.003', tactic:'TA05', name:'Exploit Data Voids',                 sub:true,  summary:'Exploit data voids — words or phrases that result in little, manipulative, or low-quality search engine data.'},
+  // TA06
+  {id:'T0015',     tactic:'TA06', name:'Create Hashtags & Search Artefacts', sub:false, summary:'Create one or more hashtags and/or hashtag groups to create a perception of reality and publicise the story more widely.'},
+  {id:'T0015.001', tactic:'TA06', name:'Use Existing Hashtag',               sub:true,  summary:'Use a dedicated, existing hashtag for the campaign/incident.'},
+  {id:'T0015.002', tactic:'TA06', name:'Create New Hashtag',                 sub:true,  summary:'Create a campaign/incident specific hashtag.'},
+  {id:'T0023',     tactic:'TA06', name:'Distort Facts',                      sub:false, summary:'Change, twist, or exaggerate existing facts to construct a narrative that differs from reality.'},
+  {id:'T0023.001', tactic:'TA06', name:'Reframe Context',                    sub:true,  summary:'Remove an event from its surrounding context to distort its intended meaning.'},
+  {id:'T0023.002', tactic:'TA06', name:'Edit Open-Source Content',           sub:true,  summary:'Edit open-source content, such as collaborative blogs or encyclopaedias, to promote narratives on outlets with existing credibility.'},
+  {id:'T0084',     tactic:'TA06', name:'Reuse Existing Content',             sub:false, summary:'Recycle content from own previous operations or plagiarise from external operations.'},
+  {id:'T0084.001', tactic:'TA06', name:'Use Copypasta',                      sub:true,  summary:'Copy and paste text that has been widely shared across various online platforms.'},
+  {id:'T0084.002', tactic:'TA06', name:'Plagiarise Content',                 sub:true,  summary:'Take content from other sources without proper attribution.'},
+  {id:'T0084.003', tactic:'TA06', name:'Deceptively Labelled/Translated',    sub:true,  summary:'Take authentic content from other sources and add deceptive labels or deceptively translate the content.'},
+  {id:'T0084.004', tactic:'TA06', name:'Appropriate Content',                sub:true,  summary:'Take content from other sources with proper attribution but leverage it as disinformation.'},
+  {id:'T0085',     tactic:'TA06', name:'Develop Text-Based Content',         sub:false, summary:'Creating and editing false or misleading text-based artefacts for use in a disinformation campaign.'},
+  {id:'T0085.001', tactic:'TA06', name:'Develop AI-Generated Text',          sub:true,  summary:'AI-generated texts composed by computers using text-generating AI technology.'},
+  {id:'T0085.003', tactic:'TA06', name:'Develop Inauthentic News Articles',  sub:true,  summary:'Develop false or misleading news articles aligned to campaign goals or narratives.'},
+  {id:'T0085.004', tactic:'TA06', name:'Develop Document',                   sub:true,  summary:'Produce text in the form of a document.'},
+  {id:'T0085.005', tactic:'TA06', name:'Develop Book',                       sub:true,  summary:'Produce text content in the form of a book (e-book or physical).'},
+  {id:'T0085.006', tactic:'TA06', name:'Develop Opinion Article',            sub:true,  summary:'Opinion articles (Op-Eds) posted to news sources, exploited to promote narratives.'},
+  {id:'T0085.007', tactic:'TA06', name:'Create Fake Research',               sub:true,  summary:'Create fake academic research targeting hot-button issues such as gender, race, climate science, etc.'},
+  {id:'T0085.008', tactic:'TA06', name:'Machine Translated Text',            sub:true,  summary:'Text translated into another language using machine translation tools.'},
+  {id:'T0086',     tactic:'TA06', name:'Develop Image-Based Content',        sub:false, summary:'Creating and editing false or misleading visual artefacts for use in a disinformation campaign.'},
+  {id:'T0086.001', tactic:'TA06', name:'Develop Memes',                      sub:true,  summary:'Memes are a powerful tool and the heart of modern influence campaigns — pulling together reference, commentary, image, narrative, emotion and message.'},
+  {id:'T0086.002', tactic:'TA06', name:'Develop AI-Generated Images',        sub:true,  summary:'Deepfakes: AI-generated falsified photos depicting an inauthentic situation.'},
+  {id:'T0086.003', tactic:'TA06', name:'Deceptively Edit Images',            sub:true,  summary:'Cheap fakes using less sophisticated measures of altering an image to create false context.'},
+  {id:'T0086.004', tactic:'TA06', name:'Aggregate Info into Evidence Collages', sub:true, summary:'Image files that aggregate positive evidence.'},
+  {id:'T0087',     tactic:'TA06', name:'Develop Video-Based Content',        sub:false, summary:'Creating and editing false or misleading video artefacts for use in a disinformation campaign.'},
+  {id:'T0087.001', tactic:'TA06', name:'Develop AI-Generated Videos',        sub:true,  summary:'Deepfake videos: AI-generated falsified videos synthetically recreating an individual\'s face, body, voice, and gestures.'},
+  {id:'T0087.002', tactic:'TA06', name:'Deceptively Edit Video',             sub:true,  summary:'Cheap fakes: slowing, speeding, or cutting footage to create false context.'},
+  {id:'T0088',     tactic:'TA06', name:'Develop Audio-Based Content',        sub:false, summary:'Creating and editing false or misleading audio artefacts for use in a disinformation campaign.'},
+  {id:'T0088.001', tactic:'TA06', name:'Develop AI-Generated Audio',         sub:true,  summary:'Deepfake audio: AI-generated falsified soundbites synthetically recreating an individual\'s voice.'},
+  {id:'T0088.002', tactic:'TA06', name:'Deceptively Edit Audio',             sub:true,  summary:'Cheap fakes: altering audio to create false context.'},
+  {id:'T0089',     tactic:'TA06', name:'Obtain Private Documents',           sub:false, summary:'Procuring documents that are not publicly available, whether authentic, altered, or inauthentic.'},
+  {id:'T0089.001', tactic:'TA06', name:'Obtain Authentic Documents',         sub:true,  summary:'Procure authentic non-public documents for later use in the operation.'},
+  {id:'T0089.003', tactic:'TA06', name:'Alter Authentic Documents',          sub:true,  summary:'Alter authentic documents (public or non-public) to achieve campaign goals.'},
+  // TA07
+  {id:'T0029',     tactic:'TA07', name:'Online Polls',                       sub:false, summary:'Create fake online polls, or manipulate existing online polls. Data gathering tactic to target those who engage.'},
+  {id:'T0107',     tactic:'TA07', name:'Bookmarking & Content Curation',     sub:false, summary:'Platforms for searching, sharing, and curating content and media (e.g. Pinterest, Flipboard).'},
+  {id:'T0109',     tactic:'TA07', name:'Consumer Review Networks',           sub:false, summary:'Platforms for finding, reviewing, and sharing information about brands, products, services (e.g. Yelp, TripAdvisor).'},
+  {id:'T0110',     tactic:'TA07', name:'Formal Diplomatic Channels',         sub:false, summary:'Leveraging formal diplomatic channels to communicate with foreign governments.'},
+  {id:'T0111',     tactic:'TA07', name:'Traditional Media',                  sub:false, summary:'Examples include TV, Newspaper, Radio, etc.'},
+  {id:'T0111.001', tactic:'TA07', name:'TV',                                 sub:true,  summary:'Television as a channel.'},
+  {id:'T0111.002', tactic:'TA07', name:'Newspaper',                          sub:true,  summary:'Newspaper as a channel.'},
+  {id:'T0111.003', tactic:'TA07', name:'Radio',                              sub:true,  summary:'Radio as a channel.'},
+  // TA14
+  {id:'T0003',     tactic:'TA14', name:'Leverage Existing Narratives',          sub:false, summary:'Use or adapt existing narrative themes. New information is understood through the lens of prevailing narratives.'},
+  {id:'T0004',     tactic:'TA14', name:'Develop Competing Narratives',          sub:false, summary:'Advance competing narratives connected to same issue, e.g. simultaneously deny while dismissing.'},
+  {id:'T0022',     tactic:'TA14', name:'Leverage Conspiracy Theory Narratives', sub:false, summary:'Conspiracy narratives appeal to the human desire for explanatory order, invoking powerful actors in pursuit of political goals.'},
+  {id:'T0022.001', tactic:'TA14', name:'Amplify Existing Conspiracy Narratives',sub:true,  summary:'Amplify an existing conspiracy theory narrative that aligns with incident or campaign goals.'},
+  {id:'T0022.002', tactic:'TA14', name:'Develop Original Conspiracy Narratives',sub:true,  summary:'Develop original conspiracy theory narratives for greater control and alignment over the narrative.'},
+  {id:'T0040',     tactic:'TA14', name:'Demand Insurmountable Proof',           sub:false, summary:'Constantly escalate demands for proof, leveraging the asymmetric advantage that conspiracists have over truth-tellers.'},
+  {id:'T0068',     tactic:'TA14', name:'Respond to Breaking News/Active Crisis',sub:false, summary:'Media attention is heightened during breaking news, where unclear facts increase speculation vulnerable to manipulation.'},
+  {id:'T0082',     tactic:'TA14', name:'Develop New Narratives',                sub:false, summary:'Develop new narratives to further strategic or tactical goals when existing narratives don\'t align.'},
+  {id:'T0083',     tactic:'TA14', name:'Integrate Audience Vuln. into Narrative',sub:false,summary:'Exploit preexisting weaknesses, fears, and enemies of the target audience for integration into the operation\'s narratives.'},
+  // TA15
+  {id:'T0010',     tactic:'TA15', name:'Cultivate Ignorant Agents',             sub:false, summary:'Cultivate propagandists for a cause whose goals are not fully comprehended. Also known as "useful idiots" or "unwitting agents".'},
+  {id:'T0014',     tactic:'TA15', name:'Prepare Fundraising Campaigns',         sub:false, summary:'Systematic effort to seek financial support while further promoting operation information pathways.'},
+  {id:'T0014.001', tactic:'TA15', name:'Raise Funds from Malign Actors',        sub:true,  summary:'Contributions from foreign agents, cutouts or proxies, shell companies, dark money groups, etc.'},
+  {id:'T0014.002', tactic:'TA15', name:'Raise Funds from Ignorant Agents',      sub:true,  summary:'Scams, donations intended for one stated purpose but used for another.'},
+  {id:'T0065',     tactic:'TA15', name:'Prepare Physical Broadcast Capabilities',sub:false,summary:'Create or coopt broadcast capabilities (e.g. TV, radio).'},
+  {id:'T0091',     tactic:'TA15', name:'Recruit Malign Actors',                  sub:false, summary:'Operators recruit bad actors including trolls, partisans, and contractors.'},
+  {id:'T0091.001', tactic:'TA15', name:'Recruit Contractors',                    sub:true,  summary:'Operators recruit paid contractors to support the campaign.'},
+  {id:'T0091.002', tactic:'TA15', name:'Recruit Partisans',                      sub:true,  summary:'Operators recruit partisans (ideologically-aligned individuals) to support the campaign.'},
+  {id:'T0091.003', tactic:'TA15', name:'Enlist Troll Accounts',                  sub:true,  summary:'Hire trolls — human operators of fake accounts that aim to provoke others by posting and amplifying controversial content.'},
+  {id:'T0092',     tactic:'TA15', name:'Build Network',                          sub:false, summary:'Build own network, creating links between accounts to amplify and promote narratives and artefacts.'},
+  {id:'T0092.001', tactic:'TA15', name:'Create Organisations',                   sub:true,  summary:'Establish organisations with legitimate or falsified hierarchies to structure operation assets.'},
+  {id:'T0092.002', tactic:'TA15', name:'Use Follow Trains',                      sub:true,  summary:'A group of people who follow each other to grow social media following.'},
+  {id:'T0092.003', tactic:'TA15', name:'Create Community or Sub-Group',          sub:true,  summary:'Create a new community or sub-group when none exists that meets campaign goals.'},
+  {id:'T0093',     tactic:'TA15', name:'Acquire/Recruit Network',                sub:false, summary:'Acquire an existing network by paying, recruiting, or exerting control over the leaders of the network.'},
+  {id:'T0093.001', tactic:'TA15', name:'Fund Proxies',                           sub:true,  summary:'Fund external entities that work for the operation to diversify locations and complicate attribution.'},
+  {id:'T0093.002', tactic:'TA15', name:'Acquire Botnets',                        sub:true,  summary:'A botnet is a group of bots that can function in coordination with each other.'},
+  {id:'T0094',     tactic:'TA15', name:'Infiltrate Existing Networks',            sub:false, summary:'Deceptively insert social assets into existing networks to influence members and the wider information environment.'},
+  {id:'T0094.001', tactic:'TA15', name:'Identify Susceptible Targets in Networks',sub:true, summary:'Identify individuals and groups that might be susceptible to being co-opted or influenced.'},
+  {id:'T0094.002', tactic:'TA15', name:'Utilise Butterfly Attacks',              sub:true,  summary:'Pretend to be members of a certain social group to insert controversial statements into the discourse.'},
+  {id:'T0095',     tactic:'TA15', name:'Develop Owned Media Assets',              sub:false, summary:'Owned media assets include websites, blogs, social media pages, forums, and other platforms.'},
+  {id:'T0096',     tactic:'TA15', name:'Leverage Content Farms',                  sub:false, summary:'Using large-scale content providers for creating and amplifying campaign artefacts at scale.'},
+  {id:'T0096.001', tactic:'TA15', name:'Create Content Farms',                    sub:true,  summary:'Create an organisation for creating and amplifying campaign artefacts at scale.'},
+  {id:'T0096.002', tactic:'TA15', name:'Outsource Content Creation',              sub:true,  summary:'Outsource content creation to external companies to avoid attribution or improve quality.'},
+  {id:'T0113',     tactic:'TA15', name:'Employ Commercial Analytic Firms',        sub:false, summary:'Commercial analytic firms evaluate data to detect trends, complicating attribution while tailoring content to preferences.'},
+  // TA16
+  {id:'T0097',     tactic:'TA16', name:'Present Persona',                      sub:false, summary:'Different types of personas commonly taken on by threat actors during influence operations, from individual to institutional.'},
+  {id:'T0097.100', tactic:'TA16', name:'Individual Persona',                   sub:true,  summary:'Presenting as an individual.'},
+  {id:'T0097.101', tactic:'TA16', name:'Local Persona',                        sub:true,  summary:'Presents as living in a particular geography or having local knowledge relevant to a narrative.'},
+  {id:'T0097.102', tactic:'TA16', name:'Journalist Persona',                   sub:true,  summary:'Presents as a reporter or journalist delivering news, conducting interviews, investigations.'},
+  {id:'T0097.103', tactic:'TA16', name:'Activist Persona',                     sub:true,  summary:'Presents as an activist who campaigns for a political cause.'},
+  {id:'T0097.104', tactic:'TA16', name:'Hacktivist Persona',                   sub:true,  summary:'Presents as an activist who conducts offensive cyber operations for political purposes.'},
+  {id:'T0097.105', tactic:'TA16', name:'Military Personnel Persona',           sub:true,  summary:'Presents as a serving member or veteran of a military organisation.'},
+  {id:'T0097.106', tactic:'TA16', name:'Recruiter Persona',                    sub:true,  summary:'Presents as a potential employer or provider of freelance work.'},
+  {id:'T0097.107', tactic:'TA16', name:'Researcher Persona',                   sub:true,  summary:'Presents as conducting research for academic institutions or think tanks.'},
+  {id:'T0097.108', tactic:'TA16', name:'Expert Persona',                       sub:true,  summary:'Presents as having expertise or experience in a field to add credibility to narratives.'},
+  {id:'T0097.109', tactic:'TA16', name:'Romantic Suitor Persona',              sub:true,  summary:'Presents as seeking a romantic or physical connection — used for blackmail, information extraction, or financial fraud.'},
+  {id:'T0097.110', tactic:'TA16', name:'Party Official Persona',               sub:true,  summary:'Presents as an official member of a political party.'},
+  {id:'T0097.111', tactic:'TA16', name:'Government Official Persona',          sub:true,  summary:'Presents as an active or previous government official.'},
+  {id:'T0097.112', tactic:'TA16', name:'Government Employee Persona',          sub:true,  summary:'Presents as an active or previous civil servant.'},
+  {id:'T0097.200', tactic:'TA16', name:'Institutional Persona',                sub:true,  summary:'Presenting as an institution, encompassing various organisational types.'},
+  {id:'T0097.201', tactic:'TA16', name:'Local Institution Persona',            sub:true,  summary:'Presenting as operating in a particular geography or having local knowledge.'},
+  {id:'T0097.202', tactic:'TA16', name:'News Outlet Persona',                  sub:true,  summary:'Presents as an organisation which delivers news to its target audience.'},
+  {id:'T0097.203', tactic:'TA16', name:'Fact Checking Organisation Persona',   sub:true,  summary:'Presents as an organisation which assesses the validity of others\' reporting.'},
+  {id:'T0097.204', tactic:'TA16', name:'Think Tank Persona',                   sub:true,  summary:'Presents as a think tank conducting original research and proposing new policies.'},
+  {id:'T0097.205', tactic:'TA16', name:'Business Persona',                     sub:true,  summary:'Presents as a for-profit organisation which provides goods or services.'},
+  {id:'T0097.206', tactic:'TA16', name:'Government Institution Persona',       sub:true,  summary:'Presenting as a government or government ministry.'},
+  {id:'T0097.207', tactic:'TA16', name:'NGO Persona',                          sub:true,  summary:'Presents as a Non-Governmental Organisation providing services or advocating for public policy.'},
+  {id:'T0097.208', tactic:'TA16', name:'Social Cause Persona',                 sub:true,  summary:'Presents as an account focused on a social cause, exploiting emotional investment.'},
+  {id:'T0098',     tactic:'TA16', name:'Establish Inauthentic News Sites',     sub:false, summary:'Modern computational propaganda uses imposter news sites with superficial markers of authenticity.'},
+  {id:'T0098.001', tactic:'TA16', name:'Create Inauthentic News Sites',        sub:true,  summary:'Create new inauthentic news sites.'},
+  {id:'T0098.002', tactic:'TA16', name:'Leverage Existing Inauthentic Sites',  sub:true,  summary:'Leverage existing inauthentic news sites.'},
+  {id:'T0100',     tactic:'TA16', name:'Co-Opt Trusted Sources',               sub:false, summary:'Infiltrate or repurpose a source to reach a target audience through existing reliable networks.'},
+  {id:'T0100.001', tactic:'TA16', name:'Co-Opt Trusted Individuals',           sub:true,  summary:'Co-opt trusted individuals to legitimise operation narratives.'},
+  {id:'T0100.002', tactic:'TA16', name:'Co-Opt Grassroots Groups',             sub:true,  summary:'Co-opt grassroots groups.'},
+  {id:'T0100.003', tactic:'TA16', name:'Co-Opt Influencers',                   sub:true,  summary:'Co-opt social media influencers.'},
+  {id:'T0143',     tactic:'TA16', name:'Persona Legitimacy',                   sub:false, summary:'Assess whether an account is presenting an authentic, fabricated, or parody persona.'},
+  {id:'T0143.001', tactic:'TA16', name:'Authentic Persona',                    sub:true,  summary:'An individual or institution presenting a persona that legitimately matches who or what they are.'},
+  {id:'T0143.002', tactic:'TA16', name:'Fabricated Persona',                   sub:true,  summary:'An individual or institution pretending to have a persona without any legitimate claim to it.'},
+  {id:'T0143.003', tactic:'TA16', name:'Impersonated Persona',                 sub:true,  summary:'Threat actors impersonate existing individuals or institutions to conceal identity or add legitimacy.'},
+  {id:'T0143.004', tactic:'TA16', name:'Parody Persona',                       sub:true,  summary:'A form of artistic expression that imitates the style of a particular individual — may be exploited to spread campaign content.'},
+  // TA08
+  {id:'T0020',     tactic:'TA08', name:'Trial Content',                        sub:false, summary:'Iteratively test incident performance, e.g. A/B test headline/content engagement metrics.'},
+  {id:'T0042',     tactic:'TA08', name:'Seed Kernel of Truth',                 sub:false, summary:'Wrap lies or altered context/facts around truths to make messaging less likely to be dismissed out of hand.'},
+  {id:'T0044',     tactic:'TA08', name:'Seed Distortions',                     sub:false, summary:'Try a wide variety of messages in the early hours surrounding an incident to give a misleading account.'},
+  {id:'T0045',     tactic:'TA08', name:'Use Fake Experts',                     sub:false, summary:'Use fake experts set up during Establish Legitimacy. Pseudo-experts give "credibility" to misinformation.'},
+  {id:'T0046',     tactic:'TA08', name:'Use Search Engine Optimisation',       sub:false, summary:'Manipulate content engagement metrics to influence news search results. Also known as "Black-hat SEO".'},
+  // TA09
+  {id:'T0114',     tactic:'TA09', name:'Deliver Ads',                          sub:false, summary:'Delivering content via any form of paid media or advertising.'},
+  {id:'T0114.001', tactic:'TA09', name:'Social Media Ads',                     sub:true,  summary:'Deliver ads through social media platforms.'},
+  {id:'T0114.002', tactic:'TA09', name:'Traditional Media Ads',                sub:true,  summary:'Deliver ads through TV, Radio, Newspaper, billboards.'},
+  {id:'T0115',     tactic:'TA09', name:'Post Content',                         sub:false, summary:'Delivering content by posting via owned media (assets that the operator controls).'},
+  {id:'T0115.001', tactic:'TA09', name:'Share Memes',                          sub:true,  summary:'Share memes — a powerful tool at the heart of modern influence campaigns.'},
+  {id:'T0115.002', tactic:'TA09', name:'Post Violative Content',               sub:true,  summary:'Post violative content to provoke takedown and backlash.'},
+  {id:'T0115.003', tactic:'TA09', name:'One-Way Direct Posting',               sub:true,  summary:'Post via a one-way messaging service, without allowing opportunities for fact-checking or disagreement.'},
+  {id:'T0116',     tactic:'TA09', name:'Comment or Reply on Content',          sub:false, summary:'Delivering content by replying or commenting via owned media.'},
+  {id:'T0116.001', tactic:'TA09', name:'Post Inauthentic Social Media Comment',sub:true,  summary:'Use government-paid social media commenters, astroturfers, or chat bots to influence online conversations.'},
+  {id:'T0117',     tactic:'TA09', name:'Attract Traditional Media',            sub:false, summary:'Deliver content by attracting the attention of traditional media (earned media).'},
+  // TA10
+  {id:'T0017',     tactic:'TA10', name:'Conduct Fundraising',                  sub:false, summary:'Systematic effort to seek financial support while further promoting operation information pathways.'},
+  {id:'T0017.001', tactic:'TA10', name:'Conduct Crowdfunding Campaigns',       sub:true,  summary:'Crowdfunding campaigns on platforms such as GoFundMe, GiveSendGo, Tipeee, Patreon.'},
+  {id:'T0057',     tactic:'TA10', name:'Organise Events',                      sub:false, summary:'Coordinate and promote real-world events across media platforms, e.g. rallies, protests, gatherings.'},
+  {id:'T0057.001', tactic:'TA10', name:'Pay for Physical Action',              sub:true,  summary:'Pay individuals to act in the physical realm to create specific situations supporting operation narratives.'},
+  {id:'T0057.002', tactic:'TA10', name:'Conduct Symbolic Action',              sub:true,  summary:'Activities specifically intended to advance the operation\'s narrative by signalling something to the audience.'},
+  {id:'T0061',     tactic:'TA10', name:'Sell Merchandise',                     sub:false, summary:'Get the message or narrative into physical space in the offline world while making money.'},
+  {id:'T0126',     tactic:'TA10', name:'Encourage Attendance at Events',       sub:false, summary:'Operation encourages attendance at existing real world events.'},
+  {id:'T0126.001', tactic:'TA10', name:'Call to Action to Attend',             sub:true,  summary:'Call to action to attend an event.'},
+  {id:'T0126.002', tactic:'TA10', name:'Facilitate Logistics/Support',         sub:true,  summary:'Facilitate logistics or support for travel, food, housing, etc.'},
+  {id:'T0127',     tactic:'TA10', name:'Physical Violence',                    sub:false, summary:'Use of force to injure, abuse, damage, or destroy to discourage opponents or draw attention to narratives.'},
+  {id:'T0127.001', tactic:'TA10', name:'Conduct Physical Violence',            sub:true,  summary:'Directly conduct physical violence to achieve campaign goals.'},
+  {id:'T0127.002', tactic:'TA10', name:'Encourage Physical Violence',          sub:true,  summary:'Encourage others to engage in physical violence to achieve campaign goals.'},
+  // TA11
+  {id:'T0059',     tactic:'TA11', name:'Play the Long Game',                   sub:false, summary:'Plan messaging and allow it to grow organically over years, or develop seemingly disconnected narratives that eventually combine.'},
+  {id:'T0060',     tactic:'TA11', name:'Continue to Amplify',                  sub:false, summary:'Continue narrative or message amplification after the main incident work has finished.'},
+  {id:'T0128',     tactic:'TA11', name:'Conceal Information Assets',           sub:false, summary:'Conceal the identity or provenance of campaign information assets to avoid takedown and attribution.'},
+  {id:'T0128.001', tactic:'TA11', name:'Use Pseudonyms',                       sub:true,  summary:'Use fake names to mask the identity of operational accounts or publish anonymous content.'},
+  {id:'T0128.002', tactic:'TA11', name:'Conceal Network Identity',             sub:true,  summary:'Hide the existence of an influence operation\'s network completely.'},
+  {id:'T0128.003', tactic:'TA11', name:'Distance Reputable Individuals',       sub:true,  summary:'Enlisted individuals actively disengage themselves from operation activities and messaging.'},
+  {id:'T0128.004', tactic:'TA11', name:'Launder Information Assets',           sub:true,  summary:'Acquire control of previously legitimate assets through sale or exchange to complicate attribution.'},
+  {id:'T0128.005', tactic:'TA11', name:'Change Names of Information Assets',   sub:true,  summary:'Change names or brand names of information assets to avoid detection.'},
+  {id:'T0129',     tactic:'TA11', name:'Conceal Operational Activity',         sub:false, summary:'Conceal the campaign\'s operational activity to avoid takedown and attribution.'},
+  {id:'T0129.001', tactic:'TA11', name:'Conceal Network Identity',             sub:true,  summary:'Aim to hide the existence of the network completely.'},
+  {id:'T0129.002', tactic:'TA11', name:'Generate Unrelated Content',           sub:true,  summary:'Mix operation content with legitimate or unrelated content to disguise operational objectives.'},
+  {id:'T0129.003', tactic:'TA11', name:'Break Association with Content',       sub:true,  summary:'Actively separate from own content by unfollowing, unliking, or removing attribution.'},
+  {id:'T0129.004', tactic:'TA11', name:'Delete URLs',                          sub:true,  summary:'Completely remove website registration to complicate attribution.'},
+  {id:'T0129.005', tactic:'TA11', name:'Coordinate on Encrypted Networks',     sub:true,  summary:'Coordinate on encrypted/closed networks.'},
+  {id:'T0129.006', tactic:'TA11', name:'Deny Involvement',                     sub:true,  summary:'Without smoking gun proof, the incident creator can or will deny involvement.'},
+  {id:'T0129.007', tactic:'TA11', name:'Delete Accounts/Activity',             sub:true,  summary:'Remove online social media assets including accounts, posts, likes, comments to complicate attribution.'},
+  {id:'T0129.009', tactic:'TA11', name:'Remove Post Origins',                  sub:true,  summary:'Eliminate evidence indicating the initial source of operation content.'},
+  {id:'T0129.010', tactic:'TA11', name:'Misattribute Activity',                sub:true,  summary:'Incorrectly attribute operation activity — mimic another state to frame them for negative behaviour.'},
+  {id:'T0130',     tactic:'TA11', name:'Conceal Infrastructure',               sub:false, summary:'Conceal the campaign\'s infrastructure to avoid takedown and attribution.'},
+  {id:'T0130.001', tactic:'TA11', name:'Conceal Sponsorship',                  sub:true,  summary:'Mislead or obscure the identity of the hidden sponsor behind an operation.'},
+  {id:'T0130.002', tactic:'TA11', name:'Utilise Bulletproof Hosting',          sub:true,  summary:'Hosting services that allow considerable leniency for suspicious, illegal, or disruptive activities.'},
+  {id:'T0130.003', tactic:'TA11', name:'Use Shell Organisations',              sub:true,  summary:'Use shell organisations to conceal sponsorship.'},
+  {id:'T0130.004', tactic:'TA11', name:'Use Cryptocurrency',                   sub:true,  summary:'Use cryptocurrency to conceal sponsorship (Bitcoin, Monero, Ethereum).'},
+  {id:'T0130.005', tactic:'TA11', name:'Obfuscate Payment',                    sub:true,  summary:'Obfuscate payment to conceal sponsorship.'},
+  {id:'T0131',     tactic:'TA11', name:'Exploit TOS/Content Moderation',       sub:false, summary:'Exploiting weaknesses in platforms\' terms of service and content moderation policies to avoid takedowns.'},
+  {id:'T0131.001', tactic:'TA11', name:'Legacy Web Content',                   sub:true,  summary:'Make incident content visible for a long time by exploiting platform terms of service.'},
+  {id:'T0131.002', tactic:'TA11', name:'Post Borderline Content',              sub:true,  summary:'Post borderline content that skirts platform moderation thresholds.'},
+  // TA17
+  {id:'T0039',     tactic:'TA17', name:'Bait Influencer',                      sub:false, summary:'Trick influencers (celebrities, journalists, local leaders) into amplifying campaign content to access their audience.'},
+  {id:'T0049',     tactic:'TA17', name:'Flood Information Space',              sub:false, summary:'Flood sources of information with a high volume of inauthentic content to control conversations and drown out opposition.'},
+  {id:'T0049.001', tactic:'TA17', name:'Trolls Amplify and Manipulate',        sub:true,  summary:'Use trolls to amplify narratives — fake profiles operating to support individuals/narratives across political spectrum.'},
+  {id:'T0049.002', tactic:'TA17', name:'Flood Existing Hashtag',               sub:true,  summary:'Post content unrelated to the hashtag, ruining functionality, or flood with campaign content.'},
+  {id:'T0049.003', tactic:'TA17', name:'Bots Amplify via Auto-Forwarding',     sub:true,  summary:'Use automated bots to amplify content above algorithm thresholds without dedicating human resources.'},
+  {id:'T0049.004', tactic:'TA17', name:'Utilise Spamoflauge',                  sub:true,  summary:'Disguise spam messages as legitimate to fool keyword-based email spam filters.'},
+  {id:'T0049.005', tactic:'TA17', name:'Conduct Swarming',                     sub:true,  summary:'Coordinated use of accounts to overwhelm the information space around a specific event or actor.'},
+  {id:'T0049.006', tactic:'TA17', name:'Conduct Keyword Squatting',            sub:true,  summary:'Create online content around specific SEO terms to overwhelm search results.'},
+  {id:'T0049.007', tactic:'TA17', name:'Inauthentic Sites Amplify Narratives', sub:true,  summary:'Inauthentic sites cross-post stories and amplify narratives, often without masthead, bylines or attribution.'},
+  {id:'T0049.008', tactic:'TA17', name:'Generate Information Pollution',       sub:true,  summary:'Flood an information source with inauthentic content to make it harder to find legitimate information.'},
+  {id:'T0118',     tactic:'TA17', name:'Amplify Existing Narrative',           sub:false, summary:'Amplify existing narratives that align with operation narratives to support objectives.'},
+  {id:'T0119',     tactic:'TA17', name:'Cross-Posting',                        sub:false, summary:'Post the same message to multiple platforms or accounts to increase content exposure.'},
+  {id:'T0119.001', tactic:'TA17', name:'Post across Groups',                   sub:true,  summary:'Post content across groups to spread narratives to new communities.'},
+  {id:'T0119.002', tactic:'TA17', name:'Post across Platforms',                sub:true,  summary:'Post content across platforms to spread narratives and remove opposition context.'},
+  {id:'T0119.003', tactic:'TA17', name:'Post across Disciplines',              sub:true,  summary:'Post content across different fields of interest.'},
+  {id:'T0120',     tactic:'TA17', name:'Incentivize Sharing',                  sub:false, summary:'Encourage users to share content themselves, reducing the need for the operation to post its own content.'},
+  {id:'T0120.001', tactic:'TA17', name:'Use Affiliate Marketing Programmes',   sub:true,  summary:'Use affiliate marketing programmes to incentivise sharing.'},
+  {id:'T0120.002', tactic:'TA17', name:'Use Contests and Prizes',              sub:true,  summary:'Use contests and prizes to incentivise sharing.'},
+  {id:'T0121',     tactic:'TA17', name:'Manipulate Platform Algorithm',        sub:false, summary:'Conduct activity on a platform that intentionally targets its underlying algorithm to increase content exposure.'},
+  {id:'T0121.001', tactic:'TA17', name:'Bypass Content Blocking',              sub:true,  summary:'Circumvent network security measures to proliferate content on restricted areas of the internet.'},
+  {id:'T0122',     tactic:'TA17', name:'Direct Users to Alt. Platforms',       sub:false, summary:'Encourage users to move from the initial platform to alternate information channels.'},
+  // TA18
+  {id:'T0047',     tactic:'TA18', name:'Censor Social Media (Political)',      sub:false, summary:'Use political influence or power of state to stop critical social media comments.'},
+  {id:'T0048',     tactic:'TA18', name:'Harass',                               sub:false, summary:'Use intimidation techniques, including cyberbullying and doxing, to discourage opponents from voicing dissent.'},
+  {id:'T0048.001', tactic:'TA18', name:'Boycott/"Cancel" Opponents',           sub:true,  summary:'Exploit cancel culture by emphasising an adversary\'s problematic behaviour and presenting own content as alternative.'},
+  {id:'T0048.002', tactic:'TA18', name:'Harass Based on Identities',           sub:true,  summary:'Harassment targeting social identities like gender, sexuality, race, ethnicity, religion, nationality.'},
+  {id:'T0048.003', tactic:'TA18', name:'Threaten to Dox',                      sub:true,  summary:'Threaten to publicly release private information about an individual.'},
+  {id:'T0048.004', tactic:'TA18', name:'Dox',                                  sub:true,  summary:'Publicly release private information including names, addresses, employment, family members.'},
+  {id:'T0123',     tactic:'TA18', name:'Control Info Env. via Cyber Ops',      sub:false, summary:'Use cyber tools and techniques to alter the trajectory of content in the information space.'},
+  {id:'T0123.001', tactic:'TA18', name:'Delete Opposing Content',              sub:true,  summary:'Remove content that conflicts with operational narratives from selected platforms.'},
+  {id:'T0123.002', tactic:'TA18', name:'Block Content',                        sub:true,  summary:'Actions taken to restrict internet access or render certain areas of the internet inaccessible.'},
+  {id:'T0123.003', tactic:'TA18', name:'Destroy Info Generation Capabilities', sub:true,  summary:'Limit, degrade, or incapacitate an actor\'s ability to generate conflicting information.'},
+  {id:'T0123.004', tactic:'TA18', name:'Conduct Server Redirect',              sub:true,  summary:'Automatically forward a user from one URL to another without their knowledge.'},
+  {id:'T0124',     tactic:'TA18', name:'Suppress Opposition',                  sub:false, summary:'Exploit platform content moderation tools to report non-violative content for takedown.'},
+  {id:'T0124.001', tactic:'TA18', name:'Report Non-Violative Content',         sub:true,  summary:'Report opposing content using copyright regulations to trigger removal of non-violating content.'},
+  {id:'T0124.002', tactic:'TA18', name:'Goad People into Harmful Action',      sub:true,  summary:'Goad people into actions that violate terms of service, leading to account or content takedown.'},
+  {id:'T0124.003', tactic:'TA18', name:'Exploit Platform TOS/Moderation',      sub:true,  summary:'Exploit platform terms of service and content moderation systems.'},
+  {id:'T0125',     tactic:'TA18', name:'Platform Filtering',                   sub:false, summary:'Decontextualization of information as claims cross platforms.'},
+  // TA12
+  {id:'T0132',     tactic:'TA12', name:'Measure Performance',                  sub:false, summary:'"Are the actions being executed as planned?" — Metric used to determine the accomplishment of actions.'},
+  {id:'T0132.001', tactic:'TA12', name:'People Focused',                       sub:true,  summary:'Measure the performance of individuals in achieving campaign goals.'},
+  {id:'T0132.002', tactic:'TA12', name:'Content Focused',                      sub:true,  summary:'Measure the performance of campaign content.'},
+  {id:'T0132.003', tactic:'TA12', name:'View Focused',                         sub:true,  summary:'Measure performance through view metrics.'},
+  {id:'T0133',     tactic:'TA12', name:'Measure Effectiveness',                sub:false, summary:'"Are we on track to achieve the intended new system state within the planned timescale?"'},
+  {id:'T0133.001', tactic:'TA12', name:'Behaviour Changes',                    sub:true,  summary:'Monitor and evaluate behaviour changes from misinformation incidents.'},
+  {id:'T0133.002', tactic:'TA12', name:'Content',                              sub:true,  summary:'Measure system state with respect to the effectiveness of campaign content.'},
+  {id:'T0133.003', tactic:'TA12', name:'Awareness',                            sub:true,  summary:'Measure system state with respect to the effectiveness of influencing awareness.'},
+  {id:'T0133.004', tactic:'TA12', name:'Knowledge',                            sub:true,  summary:'Measure system state with respect to the effectiveness of influencing knowledge.'},
+  {id:'T0133.005', tactic:'TA12', name:'Action/Attitude',                      sub:true,  summary:'Measure system state with respect to the effectiveness of influencing action/attitude.'},
+  {id:'T0134',     tactic:'TA12', name:'Measure Effectiveness Indicators (KPIs)',sub:false,summary:'Ensuring Key Performance Indicators are identified and tracked to measure performance during and after campaigns.'},
+  {id:'T0134.001', tactic:'TA12', name:'Message Reach',                        sub:true,  summary:'Monitor and evaluate message reach in misinformation incidents.'},
+  {id:'T0134.002', tactic:'TA12', name:'Social Media Engagement',              sub:true,  summary:'Monitor and evaluate social media engagement in misinformation incidents.'},
+];
+
+const tasks = [
+  {id:'TK0001', tactic:'TA01', name:'Goal setting',                              summary:'Set the goals for this incident.'},
+  {id:'TK0002', tactic:'TA01', name:'Population research / audience analysis',   summary:'Research intended audience. Includes audience segmentation, hot-button issues etc.'},
+  {id:'TK0003', tactic:'TA01', name:'Campaign design (objective design)',         summary:'Design the campaign(s) needed to meet the incident goals.'},
+  {id:'TK0031', tactic:'TA01', name:'OPSEC for TA01',                            summary:'OPSEC activities for Plan Strategy.'},
+  {id:'TK0004', tactic:'TA02', name:'Identify target subgroups',                 summary:'Identify groups that can best be used to meet incident goals.'},
+  {id:'TK0005', tactic:'TA02', name:'Analyse subgroups',                         summary:'Analyse identified subgroups.'},
+  {id:'TK0006', tactic:'TA02', name:'Create master narratives',                  summary:'Create master narratives for the campaign.'},
+  {id:'TK0007', tactic:'TA02', name:'Decide on techniques (4Ds etc)',            summary:'Decide on techniques such as Dismiss, Distort, Distract, Dismay, Divide.'},
+  {id:'TK0008', tactic:'TA02', name:'Create subnarratives',                      summary:'Create subnarratives supporting master narratives.'},
+  {id:'TK0009', tactic:'TA02', name:'4chan/8chan coordinating content',           summary:'Coordinate content through 4chan/8chan channels.'},
+  {id:'TK0032', tactic:'TA02', name:'OPSEC for TA02',                            summary:'OPSEC activities for Plan Objectives.'},
+  {id:'TK0010', tactic:'TA15', name:'Present Persona',                           summary:'Present the persona for use in the campaign.'},
+  {id:'TK0011', tactic:'TA15', name:'Recruit contractors',                       summary:'Recruit contractors to support the campaign.'},
+  {id:'TK0012', tactic:'TA15', name:'Recruit partisans',                         summary:'Recruit ideologically-aligned individuals.'},
+  {id:'TK0013', tactic:'TA15', name:'Find influencers',                          summary:'Find influencers to amplify the campaign.'},
+  {id:'TK0033', tactic:'TA15', name:'OPSEC for TA15',                            summary:'OPSEC activities for Establish Assets.'},
+  {id:'TK0014', tactic:'TA15', name:'Network building',                          summary:'Build the network needed for the campaign.'},
+  {id:'TK0015', tactic:'TA15', name:'Network infiltration',                      summary:'Infiltrate existing networks.'},
+  {id:'TK0016', tactic:'TA15', name:'Identify targets in networks',              summary:'Identify susceptible audience members in networks.'},
+  {id:'TK0034', tactic:'TA15', name:'OPSEC for TA15 (II)',                       summary:'Additional OPSEC activities for Establish Assets.'},
+  {id:'TK0035', tactic:'TA05', name:'OPSEC for TA05',                            summary:'OPSEC activities for Microtarget.'},
+  {id:'TK0017', tactic:'TA06', name:'Content creation',                          summary:'Create content for the campaign.'},
+  {id:'TK0018', tactic:'TA06', name:'Content appropriation',                     summary:'Appropriate or repurpose existing content.'},
+  {id:'TK0036', tactic:'TA06', name:'OPSEC for TA06',                            summary:'OPSEC activities for Develop Content.'},
+  {id:'TK0037', tactic:'TA07', name:'OPSEC for TA07',                            summary:'OPSEC activities for Select Channels.'},
+  {id:'TK0019', tactic:'TA08', name:'Anchor trust / credibility',                summary:'Establish trust and credibility before broader content release.'},
+  {id:'TK0020', tactic:'TA08', name:'Insert themes',                             summary:'Insert campaign themes during pump priming.'},
+  {id:'TK0038', tactic:'TA08', name:'OPSEC for TA08',                            summary:'OPSEC activities for Conduct Pump Priming.'},
+  {id:'TK0021', tactic:'TA09', name:'Deamplification (suppression, censoring)',  summary:'Actions to deamplify opposition content.'},
+  {id:'TK0022', tactic:'TA09', name:'Amplification',                             summary:'Actions to amplify campaign content.'},
+  {id:'TK0039', tactic:'TA09', name:'OPSEC for TA09',                            summary:'OPSEC activities for Deliver Content.'},
+  {id:'TK0040', tactic:'TA10', name:'OPSEC for TA10',                            summary:'OPSEC activities for Drive Offline Activity.'},
+  {id:'TK0023', tactic:'TA11', name:'Retention',                                 summary:'Retain audience engagement with the campaign.'},
+  {id:'TK0024', tactic:'TA11', name:'Customer relationship',                     summary:'Manage relationships with campaign audience members.'},
+  {id:'TK0025', tactic:'TA11', name:'Advocacy / zealotry',                       summary:'Build advocacy and zealotry around campaign narratives.'},
+  {id:'TK0026', tactic:'TA11', name:'Conversion',                                summary:'Convert audience members into active campaign supporters.'},
+  {id:'TK0027', tactic:'TA11', name:'Keep recruiting/prospecting',               summary:'Continue recruiting and prospecting new supporters.'},
+  {id:'TK0041', tactic:'TA11', name:'OPSEC for TA11',                            summary:'OPSEC activities for Persist in the Information Environment.'},
+  {id:'TK0028', tactic:'TA12', name:'Evaluation',                                summary:'Evaluate the effectiveness of the campaign.'},
+  {id:'TK0029', tactic:'TA12', name:'Post-mortem',                               summary:'Conduct a post-mortem analysis of the campaign.'},
+  {id:'TK0030', tactic:'TA12', name:'After-action analysis',                     summary:'Perform after-action analysis.'},
+  {id:'TK0042', tactic:'TA12', name:'OPSEC for TA12',                            summary:'OPSEC activities for Assess Effectiveness.'},
+];
+
+// Build lookup maps
+const tacticsByPhase = {};
+const techniquesByTactic = {};
+const tasksByTactic = {};
+
+tactics.forEach(t => {
+  if (!tacticsByPhase[t.phase]) tacticsByPhase[t.phase] = [];
+  tacticsByPhase[t.phase].push(t);
+});
+techniques.forEach(t => {
+  if (!techniquesByTactic[t.tactic]) techniquesByTactic[t.tactic] = [];
+  techniquesByTactic[t.tactic].push(t);
+});
+tasks.forEach(t => {
+  if (!tasksByTactic[t.tactic]) tasksByTactic[t.tactic] = [];
+  tasksByTactic[t.tactic].push(t);
+});
+
+const phaseColors = {P01:'#2a6fa0', P02:'#c07020', P03:'#b03030', P04:'#2a8a50'};
+
+function buildMatrix() {
+  const matrix = document.getElementById('matrix');
+  phases.forEach(phase => {
+    const col = document.createElement('div');
+    col.className = 'phase-col';
+
+    const pTactics = tacticsByPhase[phase.id] || [];
+    const techCount = pTactics.reduce((acc, ta) => acc + (techniquesByTactic[ta.id]||[]).length, 0);
+
+    const header = document.createElement('div');
+    header.className = `phase-header ${phase.color}`;
+    header.innerHTML = `<div><span class="phase-id">${phase.id}</span><br>${phase.name}</div><span class="phase-count">${pTactics.length} tactics · ${techCount} techniques</span>`;
+    header.style.cursor = 'pointer';
+    header.title = phase.desc;
+    header.onclick = () => showDetail('phase', phase.id);
+    col.appendChild(header);
+
+    pTactics.forEach((tactic, ti) => {
+      const card = document.createElement('div');
+      card.className = `tactic-card ${phase.color}-bg`;
+      if (ti > 0) card.style.marginTop = '8px';
+
+      const techs = techniquesByTactic[tactic.id] || [];
+      const taskList = tasksByTactic[tactic.id] || [];
+
+      const tacHeader = document.createElement('div');
+      tacHeader.className = 'tactic-header';
+      tacHeader.innerHTML = `
+        <div class="tactic-meta">
+          <div class="tactic-id">${tactic.id}</div>
+          <div class="tactic-name">${tactic.name}</div>
+          <div class="tactic-tech-count">${techs.length} techniques · ${taskList.length} tasks</div>
+        </div>
+        <span class="tactic-arrow">&#9654;</span>`;
+
+      const panel = document.createElement('div');
+      panel.className = 'techniques-panel';
+
+      tacHeader.onclick = () => {
+        const arrow = tacHeader.querySelector('.tactic-arrow');
+        const isOpen = panel.classList.toggle('open');
+        arrow.classList.toggle('open', isOpen);
+        tacHeader.classList.toggle('active', isOpen);
+      };
+
+      tacHeader.addEventListener('contextmenu', e => {
+        e.preventDefault();
+        showDetail('tactic', tactic.id);
+      });
+
+      // Double-click for detail
+      tacHeader.addEventListener('dblclick', e => {
+        showDetail('tactic', tactic.id);
+      });
+
+      // Techniques
+      if (techs.length > 0) {
+        techs.forEach(tech => {
+          const item = document.createElement('div');
+          item.className = `tech-item${tech.sub ? ' sub' : ''}`;
+          item.innerHTML = `<span class="tech-id">${tech.id}</span><span class="tech-name">${tech.name}</span>`;
+          item.onclick = (e) => { e.stopPropagation(); showDetail('technique', tech.id); };
+          panel.appendChild(item);
+        });
+      }
+
+      // Tasks
+      if (taskList.length > 0) {
+        const tasksDiv = document.createElement('div');
+        tasksDiv.className = 'tasks-section';
+        const label = document.createElement('div');
+        label.className = 'tasks-label';
+        label.textContent = 'Tasks';
+        tasksDiv.appendChild(label);
+        taskList.forEach(task => {
+          const item = document.createElement('div');
+          item.className = 'task-item';
+          item.innerHTML = `<span class="task-id">${task.id}</span><span class="task-name">${task.name}</span>`;
+          item.onclick = (e) => { e.stopPropagation(); showDetail('task', task.id); };
+          tasksDiv.appendChild(item);
+        });
+        panel.appendChild(tasksDiv);
+      }
+
+      card.appendChild(tacHeader);
+      card.appendChild(panel);
+      col.appendChild(card);
+    });
+
+    matrix.appendChild(col);
+  });
+}
+
+function showDetail(type, id) {
+  let item, parentTactic, parentPhase;
+  const colors = {phase:'#2a6fa0', tactic:'#5a4090', technique:'#2a6070', task:'#4a5090'};
+
+  if (type === 'phase') {
+    item = phases.find(p => p.id === id);
+  } else if (type === 'tactic') {
+    item = tactics.find(t => t.id === id);
+    parentPhase = phases.find(p => p.id === item.phase);
+  } else if (type === 'technique') {
+    item = techniques.find(t => t.id === id);
+    parentTactic = tactics.find(t => t.id === item.tactic);
+    parentPhase = phases.find(p => p.id === parentTactic.phase);
+  } else if (type === 'task') {
+    item = tasks.find(t => t.id === id);
+    parentTactic = tactics.find(t => t.id === item.tactic);
+    parentPhase = phases.find(p => p.id === parentTactic.phase);
+  }
+
+  if (!item) return;
+
+  let breadcrumb = '';
+  if (parentPhase) breadcrumb += `<span class="breadcrumb-item bc-phase">${parentPhase.id}: ${parentPhase.name}</span><span class="breadcrumb-sep">›</span>`;
+  if (parentTactic) breadcrumb += `<span class="breadcrumb-item bc-tactic">${parentTactic.id}: ${parentTactic.name}</span><span class="breadcrumb-sep">›</span>`;
+
+  const typeLabel = {phase:'Phase', tactic:'Tactic', technique:'Technique', task:'Task'}[type];
+  const typeColor = colors[type];
+
+  let relatedHTML = '';
+  if (type === 'tactic') {
+    const techs = techniquesByTactic[id] || [];
+    const taskList = tasksByTactic[id] || [];
+    if (techs.length) {
+      relatedHTML += `<hr class="detail-divider"><div class="detail-section-title">${techs.length} Techniques</div>`;
+      relatedHTML += techs.map(t => `<div class="tech-item${t.sub?' sub':''}" onclick="showDetail('technique','${t.id}')" style="cursor:pointer;padding:5px 8px;margin:2px 0;border-radius:4px;"><span class="tech-id">${t.id}</span><span class="tech-name">${t.name}</span></div>`).join('');
+    }
+    if (taskList.length) {
+      relatedHTML += `<hr class="detail-divider"><div class="detail-section-title">${taskList.length} Tasks</div>`;
+      relatedHTML += taskList.map(t => `<div class="task-item" onclick="showDetail('task','${t.id}')" style="cursor:pointer;padding:4px 8px;margin:2px 0;border-radius:4px;"><span class="task-id">${t.id}</span><span class="task-name">${t.name}</span></div>`).join('');
+    }
+  } else if (type === 'phase') {
+    const pTactics = tacticsByPhase[id] || [];
+    if (pTactics.length) {
+      relatedHTML += `<hr class="detail-divider"><div class="detail-section-title">${pTactics.length} Tactics</div>`;
+      relatedHTML += pTactics.map(t => `<div class="tech-item" onclick="showDetail('tactic','${t.id}')" style="cursor:pointer;padding:6px 8px;margin:2px 0;border-radius:4px;"><span class="tech-id">${t.id}</span><span class="tech-name">${t.name}</span></div>`).join('');
+    }
+  }
+
+  document.getElementById('detailContent').innerHTML = `
+    ${breadcrumb ? `<div class="detail-breadcrumb">${breadcrumb}</div>` : ''}
+    <div class="detail-type" style="color:${typeColor}">${typeLabel}</div>
+    <div class="detail-id" style="color:${typeColor}">${item.id}</div>
+    <div class="detail-name">${item.name}</div>
+    <div class="detail-summary">${item.summary || item.desc || ''}</div>
+    ${relatedHTML}
+  `;
+
+  document.getElementById('overlay').classList.add('open');
+  document.getElementById('detailPanel').classList.add('open');
+}
+
+function closeDetail() {
+  document.getElementById('overlay').classList.remove('open');
+  document.getElementById('detailPanel').classList.remove('open');
+}
+
+buildMatrix();
+</script>
+</body>
+</html>
